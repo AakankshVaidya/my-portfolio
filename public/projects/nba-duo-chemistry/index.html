@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pair Impact Score — NBA Duo Chemistry</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- D3.js -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <!-- Project files -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ============================================= -->
+  <!-- TOP BAR: Title + Team Selector                -->
+  <!-- ============================================= -->
+  <header id="top-bar">
+    <h1 id="main-title">Pair Impact Score · 2024-25 Playoffs</h1>
+    <div id="team-selector">
+      <button id="team-prev" class="team-arrow" aria-label="Previous team">&#8249;</button>
+      <div id="team-name-wrapper">
+        <span id="team-abbr">ATL</span><span id="team-chevron">&#9662;</span>
+        <div id="team-dropdown" class="hidden">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      <button id="team-next" class="team-arrow" aria-label="Next team">&#8250;</button>
+    </div>
+  </header>
+
+  <!-- ============================================= -->
+  <!-- MAIN CONTENT: Network (left) + Info (right)   -->
+  <!-- ============================================= -->
+  <main id="main-content">
+    <aside id="bar-panel">
+      <div class="bar-panel-header">Duo Plus/Minus</div>
+      <div id="bar-scroll-area">
+        <svg id="bar-svg"></svg>
+      </div>
+    </aside>
+
+    <section id="network-panel">
+      <svg id="network-svg"></svg>
+    </section>
+
+    <aside id="info-panel">
+      <div id="info-content">
+        <!-- Default: PIS formula description. Replaced on edge click. -->
+      </div>
+    </aside>
+  </main>
+
+  <!-- Main JS (loaded last) -->
+  <script src="main.js"></script>
+
+</body>
+</html>

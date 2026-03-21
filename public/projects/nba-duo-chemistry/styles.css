@@ -1,0 +1,633 @@
+/* ==============================================
+   0. CSS CUSTOM PROPERTIES (THEME)
+   ============================================== */
+:root {
+  /* Typography */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  /* Layout */
+  --top-bar-height: 64px;
+  --bar-panel-width: 280px;
+  --info-panel-width: 310px;
+  --page-pad: 24px;
+  --border-radius: 8px;
+
+  /* Colors — defaults, overridden per-team by JS */
+  --team-primary: #c8102e;
+  --team-secondary: #fdbb30;
+  --team-bg-tint: rgba(200, 16, 46, 0.06);
+
+  /* Neutrals */
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --border: #e8e6e1;
+  --text-primary: #1a1a18;
+  --text-secondary: #6b6960;
+  --text-muted: #9e9a90;
+
+  /* Misc */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --transition-speed: 0.4s;
+}
+
+/* ==============================================
+   1. RESET & BASE
+   ============================================== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==============================================
+   2. TOP BAR
+   ============================================== */
+#top-bar {
+  height: var(--top-bar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--page-pad);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: relative;
+  z-index: 10;
+}
+
+#main-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* --- Team Selector --- */
+#team-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.team-arrow {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.team-arrow:hover {
+  border-color: var(--team-primary);
+  color: var(--team-primary);
+  background: var(--team-bg-tint);
+}
+
+#team-name-wrapper {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+#team-abbr {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  color: var(--team-primary);
+  padding: 4px 12px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+
+#team-abbr:hover {
+  background: var(--team-bg-tint);
+}
+
+/* --- Dropdown chevron (BIGGER) --- */
+#team-chevron {
+  font-size: 1.5rem;
+  color: var(--team-primary);
+  margin-left: -2px;
+  opacity: 0.5;
+  transition: opacity 0.2s ease, transform 0.25s ease;
+  display: inline-block;
+  line-height: 1;
+}
+
+#team-name-wrapper:hover #team-chevron {
+  opacity: 0.9;
+}
+
+#team-name-wrapper.open #team-chevron {
+  transform: rotate(180deg);
+  opacity: 0.9;
+}
+
+/* --- Dropdown --- */
+#team-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  padding: 6px 0;
+}
+
+#team-dropdown.hidden {
+  display: none;
+}
+
+.dropdown-item {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-item:hover {
+  background: var(--team-bg-tint);
+}
+
+.dropdown-item.active {
+  color: var(--team-primary);
+  font-weight: 700;
+}
+
+.dropdown-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ==============================================
+   3. MAIN CONTENT AREA (Bar + Network + Info)
+   ============================================== */
+#main-content {
+  display: flex;
+  height: calc(100vh - var(--top-bar-height));
+  overflow: hidden;
+}
+
+/* --- Bar Panel (Left Column) --- */
+#bar-panel {
+  width: var(--bar-panel-width);
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bar-panel-header {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  padding: 16px 16px 6px 16px;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+
+#bar-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#bar-svg {
+  width: 100%;
+  display: block;
+}
+
+/* --- Network Panel (Center Column) --- */
+#network-panel {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+#network-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* --- Interaction hint overlay --- */
+.network-hint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: var(--surface);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 20px;
+  opacity: 0.85;
+  pointer-events: auto;
+  cursor: default;
+  z-index: 5;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  animation: hintPulse 3s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-dismiss {
+  background: none;
+  border: none;
+  color: var(--surface);
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.hint-dismiss:hover {
+  opacity: 1;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.55; }
+}
+
+/* --- Network legend (node size FIRST, then edge strength) --- */
+.network-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 5;
+  pointer-events: none;
+  background: rgba(255,255,255,0.93);
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.legend-section + .legend-section {
+  margin-top: 10px;
+}
+
+.legend-title {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.legend-sub {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.legend-bar {
+  width: 120px;
+  height: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 120px;
+  margin-top: 2px;
+}
+
+.legend-labels span {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.legend-node-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.legend-node-example {
+  border-radius: 50%;
+  display: inline-block;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+#legend-node-sm {
+  width: 10px;
+  height: 10px;
+}
+
+#legend-node-lg {
+  width: 22px;
+  height: 22px;
+}
+
+.legend-node-dash {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Network element styles */
+.node-circle {
+  cursor: pointer;
+  transition: r 0.2s ease, opacity var(--transition-speed) ease;
+}
+
+.node-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  fill: var(--text-primary);
+  pointer-events: none;
+  text-anchor: middle;
+  transition: opacity var(--transition-speed) ease;
+}
+
+.edge-line {
+  cursor: pointer;
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke var(--transition-speed) ease,
+              stroke-width 0.2s ease,
+              opacity var(--transition-speed) ease;
+}
+
+.edge-line:hover {
+  stroke-width: 4px !important;
+}
+
+/* Dimmed state for non-highlighted elements */
+.node-circle.dimmed { opacity: 0.15; }
+.node-label.dimmed  { opacity: 0.15; }
+.edge-line.dimmed   { opacity: 0.08; }
+
+/* Highlighted state */
+.edge-line.highlighted {
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.2));
+}
+
+/* ==============================================
+   4. INFO PANEL (Right Side)
+   ============================================== */
+#info-panel {
+  width: var(--info-panel-width);
+  flex-shrink: 0;
+  background: var(--surface);
+  overflow-y: auto;
+  padding: var(--page-pad);
+  border-left: 1px solid var(--border);
+}
+
+#info-content {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Default PIS Description --- */
+.pis-description h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.pis-description p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.pis-formula {
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  line-height: 1.7;
+  color: var(--text-primary);
+  word-break: break-all;
+  margin-bottom: 10px;
+}
+
+.pis-description .weight-list {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding-left: 16px;
+  line-height: 1.8;
+}
+
+/* --- Edge Detail View --- */
+.edge-detail h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin-bottom: 4px;
+  color: var(--team-primary);
+}
+
+.edge-detail .duo-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  transition: border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--team-primary);
+}
+
+.stat-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.stat-value.positive { color: #2a9d3e; }
+.stat-value.negative { color: #d32f2f; }
+
+/* ==============================================
+   5. BAR CHART STYLES (Left Column)
+   ============================================== */
+.bar-rect {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.bar-rect:hover {
+  opacity: 0.8;
+}
+
+.bar-rect.dimmed {
+  opacity: 0.2;
+}
+
+.bar-label-p1 {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.bar-label-p2 {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 400;
+  fill: var(--text-muted);
+}
+
+.bar-value-label {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  fill: var(--text-primary);
+}
+
+.bar-axis text {
+  font-family: var(--font-body);
+  font-size: 9px;
+  fill: var(--text-secondary);
+}
+
+.bar-axis line,
+.bar-axis path {
+  stroke: var(--border);
+}
+
+.bar-zero-line {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 3,3;
+}
+
+/* Scrollbar styling */
+#bar-scroll-area::-webkit-scrollbar,
+#info-panel::-webkit-scrollbar {
+  width: 4px;
+}
+#bar-scroll-area::-webkit-scrollbar-track,
+#info-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+#bar-scroll-area::-webkit-scrollbar-thumb,
+#info-panel::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* ==============================================
+   6. UTILITY & TRANSITIONS
+   ============================================== */
+.transition-fade {
+  transition: opacity var(--transition-speed) ease;
+}
+
+/* ==============================================
+   7. RESPONSIVE ADJUSTMENTS
+   ============================================== */
+@media (max-width: 1100px) {
+  :root {
+    --info-panel-width: 260px;
+    --bar-panel-width: 250px;
+    --page-pad: 16px;
+  }
+
+  #main-title { font-size: 1.3rem; }
+  #team-abbr  { font-size: 1.2rem; }
+  .stat-grid  { grid-template-columns: 1fr; }
+}

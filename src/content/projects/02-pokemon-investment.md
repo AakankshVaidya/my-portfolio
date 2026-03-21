@@ -2,7 +2,7 @@
 title: "Pokémon: Nostalgia or Investment?"
 description: "A scrollytelling data story comparing Pokémon card price history against the S&P 500, Apple, and NVIDIA — built with D3.js, featuring a pack-opening animation and interactive investment calculator."
 tags: ["D3.js", "Scrollytelling", "Data Viz"]
-link: "/projects/pokemon-investment/"
+link: "/projects/pokemon-investment/index.html"
 github: "https://github.com/AakankshVaidya/my-portfolio"
 order: 2
 ---

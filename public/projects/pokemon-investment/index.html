@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokémon: Nostalgia or Investment?</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="noise"></div>
+<div id="prog"></div>
+
+<section class="hero">
+  <div style="z-index:2;padding:0 20px">
+    <p class="hero-eye">A data-driven exploration</p>
+    <h1>
+      <span class="hl hl1">Is Pokémon just a</span>
+      <span class="hl hl2"><em>nostalgic</em> collectible</span>
+      <span class="hl hl3">or a <span class="gold">valid investment?</span></span>
+    </h1>
+    <div class="hero-cue"><span>Scroll to find out</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div>
+  </div>
+</section>
+
+<!-- PACK — bigger container -->
+<div class="scr" id="secPack">
+  <div class="pin">
+    <div style="position:relative;width:100%;max-width:1100px;height:600px;display:flex;align-items:center;justify-content:center">
+      <div class="pack-w" id="pw"><img src="assets/pack.png" class="pack-img" alt="Pokémon Base Set Booster Pack"><div class="pack-tear" id="pt"></div></div>
+      <div id="pCards" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+        <div class="pc" data-i="0"><div class="pc-i"><div class="pc-b"></div><div class="pc-f"><img src="assets/charizard.png"></div></div><div class="glow" style="background:var(--charizard)"></div></div>
+        <div class="pc" data-i="1"><div class="pc-i"><div class="pc-b"></div><div class="pc-f"><img src="assets/umbreon.png"></div></div><div class="glow" style="background:var(--umbreon)"></div></div>
+        <div class="pc" data-i="2"><div class="pc-i"><div class="pc-b"></div><div class="pc-f"><img src="assets/blastoise.png"></div></div><div class="glow" style="background:var(--blastoise)"></div></div>
+        <div class="pc" data-i="3"><div class="pc-i"><div class="pc-b"></div><div class="pc-f"><img src="assets/mew.png"></div></div><div class="glow" style="background:var(--mew)"></div></div>
+        <div class="pc" data-i="4"><div class="pc-i"><div class="pc-b"></div><div class="pc-f"><img src="assets/pikachu.png"></div></div><div class="glow" style="background:var(--pikachu)"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MEET — bigger layout -->
+<div class="scr" id="secMeet">
+  <div class="pin">
+    <div class="m-thumbs" id="mRow"></div>
+    <div class="m-big" id="mBig"></div>
+    <div class="m-info" id="mInfo"></div>
+  </div>
+</div>
+
+<!-- PRICE CHART + live stats -->
+<div class="scr" id="secChart">
+  <div class="ch-pin">
+    <div class="ch-hdr"><h2>The Price History</h2><p>Monthly ungraded card values, 2021–2026</p></div>
+    <div class="ch-row">
+      <div class="ch-main">
+        <div class="ch-box" id="cBox"><svg id="cSvg"></svg><div class="ttip" id="cTip"></div></div>
+        <div class="leg" id="cLeg"></div>
+      </div>
+      <div class="ch-side" id="cStats">
+        <div id="statsContent"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON + live returns panel -->
+<div class="scr" id="secCompare">
+  <div class="ch-pin">
+    <div class="ch-hdr"><h2>Cards vs. Wall Street</h2><p id="compSub">$1,000 invested from Mar 2021 — where would it be today?</p></div>
+    <div class="ch-row">
+      <div class="ch-main">
+        <div class="ch-box" id="xBox"><svg id="xSvg"></svg><div class="ttip" id="xTip"></div></div>
+        <div class="leg" id="xLeg"></div>
+      </div>
+      <div class="ch-side" id="xPanel">
+        <div class="side-title">Investment Returns</div>
+        <label class="ctrl-label">Amount invested</label>
+        <div class="ctrl-wrap"><span class="ctrl-pfx">$</span><input type="number" id="investAmt" value="1000" min="100" step="100" class="ctrl-inp"></div>
+        <label class="ctrl-label" style="margin-top:12px">Show / Hide</label>
+        <div id="toggles"></div>
+        <div class="side-divider"></div>
+        <div id="returnsContent"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GRADING -->
+<section class="grading">
+  <div class="gr-in">
+    <div class="ch-hdr"><h2>The Grading Effect</h2><p>How a number from 1–10 can multiply a card's value by 50×</p></div>
+    <div class="gr-txt">
+      <p>Professional grading services like <strong>PSA</strong>, <strong>BGS</strong>, and <strong>CGC</strong> authenticate and rate a card's condition on a 1–10 scale. A card graded <span class="gh">PSA 10 (Gem Mint)</span> can be worth <em>5–50× more</em> than the same card ungraded.</p>
+      <p>This is where Pokémon cards become a <em>real</em> asset class. Grading creates verifiable, tiered value — much like a diamond's certification.</p>
+    </div>
+    <div class="gv" id="gBox"><svg id="gSvg"></svg></div>
+    <p class="gv-n">PSA grading data based on recent sales from PriceCharting.</p>
+  </div>
+</section>
+
+<!-- CONCLUSION — each item unique color, bigger -->
+<section class="conc" id="sConc">
+  <div class="conc-in">
+    <h2>So... is it a valid investment?</h2>
+    <div class="vds">
+      <div class="vd" style="--vc:#22c55e"><span class="vd-label">The Upside</span><p>Some cards have dramatically outperformed the S&P 500 and even NVIDIA over the last 5 years.</p></div>
+      <div class="vd" style="--vc:#2563eb"><span class="vd-label">Real Asset Value</span><p>Professional grading creates verifiable, tiered value. A PSA 10 Charizard is worth 30× more than ungraded. Condition is everything.</p></div>
+      <div class="vd" style="--vc:#e85d26"><span class="vd-label">The Volatility</span><p>Cards can lose 50%+ in months during market corrections. The Shadowless Charizard dropped from $5,000 to $765 in under a year. This is not a stable asset.</p></div>
+      <div class="vd" style="--vc:#f59e0b"><span class="vd-label">The Liquidity Risk</span><p>You can't sell a card instantly like a stock. Finding a buyer at fair value takes time, and fees from grading and marketplace commissions eat into returns.</p></div>
+      <div class="vd vd-fin" style="--vc:var(--gold)"><span class="vd-label">The Bottom Line</span><p>The best investment is the one you <em>never want to sell.</em></p></div>
+    </div>
+    <div class="cc" id="ccBox"></div>
+    <p class="conc-ft">QSS19 · Data Visualization · 2026</p>
+  </div>
+</section>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

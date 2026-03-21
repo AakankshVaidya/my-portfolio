@@ -2,7 +2,7 @@
 title: "Pair Impact Score — NBA Duo Chemistry"
 description: "An interactive force-directed network graph and bar chart revealing per-minute chemistry between NBA duos using a custom Pair Impact Score metric built with D3.js."
 tags: ["D3.js", "Data Viz", "NBA"]
-link: "/projects/nba-duo-chemistry/"
+link: "/projects/nba-duo-chemistry/index.html"
 github: "https://github.com/AakankshVaidya/my-portfolio"
 order: 1
 ---
