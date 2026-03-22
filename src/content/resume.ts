@@ -92,9 +92,10 @@ export const skills = [
   "HTML",
   "Javascript",
   "Figma",
-  "Solidworks",
   "Excel",
+  "PowerBI",
   "PowerPoint",
+  "Solidworks",
 ];
 
 export const interests = [
