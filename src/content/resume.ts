@@ -24,7 +24,7 @@ export const experience = [
   {
     date: "Jul 2025 — Aug 2025",
     role: "Finance Intern",
-    company: "Avery Dennison (Fortune 500)",
+    company: "Avery Dennison",
     description:
       "Analyzed performance data for 1,000+ companies and ~100,000 products, building confidence-interval outlier screens and re-baselining metrics across Power BI dashboards. Collaborated with teams in 5 country offices to translate stakeholder requirements into actionable data features.",
     skills: ["Python", "Power BI", "Data Analysis", "Finance"],
@@ -32,7 +32,7 @@ export const experience = [
   {
     date: "Dec 2024 — Jan 2025",
     role: "Intern",
-    company: "Presight AI (Public Listed Company)",
+    company: "Presight AI",
     description:
       "Built a Python-based predictive model for mangrove carbon sequestration by integrating 50+ ecological models and 100+ species-specific constants, producing outputs for Presight's AI-driven digital-twin platform.",
     skills: ["Python", "Predictive Modeling", "AI"],
@@ -71,7 +71,7 @@ export const education = [
     years: "2023 — 2027",
   },
   {
-    degree: "A Levels: Further Maths, Maths, Physics, Economics (All A's)",
+    degree: "A Levels: Further Maths, Maths, Physics, Economics",
     school: "Brighton College, Abu Dhabi",
     years: "2021 — 2023",
   },
