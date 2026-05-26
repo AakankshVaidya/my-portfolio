@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title id="pageTitle">Investment Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --bg-soft: #F7F8FA;
+    --bg-softer: #FAFBFC;
+    --bg-card: #FFFFFF;
+    --border: #EAEDF0;
+    --border-strong: #D5DAE0;
+    --text: #0B0E13;
+    --text-dim: #4A5159;
+    --text-mute: #7A8189;
+    --text-faint: #B0B6BD;
+    --accent: #00C805;
+    --accent-deep: #00A704;
+    --accent-bg: rgba(0, 200, 5, 0.08);
+    --negative: #FF4747;
+    --warning: #FF9500;
+    --warning-bg: rgba(255, 149, 0, 0.10);
+    --danger: #FF3B30;
+    --danger-bg: rgba(255, 59, 48, 0.08);
+
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 32px 64px;
+  }
+  @media (max-width: 1000px) {
+    .app { padding: 20px 20px 48px; }
+  }
+
+  /* ============ TOP BAR ============ */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .brand-logo {
+    font-family: var(--font-sans);
+    font-size: 18px; font-weight: 700;
+    color: var(--accent-deep);
+    letter-spacing: -0.4px;
+  }
+  .updated {
+    font-size: 13px; color: var(--text-mute); font-weight: 500;
+  }
+
+  /* ============ TWO-COLUMN HERO + HIGHLIGHTS ============ */
+  .top-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 32px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 920px) {
+    .top-row { grid-template-columns: 1fr; gap: 20px; }
+  }
+
+  .hero { margin-bottom: 0; }
+  .hero-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .hero-image {
+    width: 32px; height: 32px;
+    border-radius: 8px; overflow: hidden;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    cursor: zoom-in;
+    transition: transform 0.15s;
+  }
+  .hero-image:hover { transform: scale(1.08); }
+  .hero-image img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .hero-symbol {
+    font-family: var(--font-sans);
+    font-size: 13px; font-weight: 600; color: var(--text-mute);
+    letter-spacing: 0.4px;
+  }
+  .hero-name {
+    font-size: 24px; font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.6px;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .hero-tags { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .tag {
+    font-size: 12px; font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .tag::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .tag.oop { color: var(--danger); background: var(--danger-bg); }
+  .tag.rotated { color: var(--warning); background: var(--warning-bg); }
+  .tag.in-print { color: var(--accent-deep); background: var(--accent-bg); }
+  .tag.legal { color: var(--text-mute); background: var(--bg-soft); }
+  .tag.product-type { color: var(--text-mute); background: var(--bg-soft); }
+
+  .hero-price {
+    font-family: var(--font-sans);
+    font-size: 56px; font-weight: 700;
+    color: var(--text);
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  .hero-change {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 16px; font-weight: 600;
+    flex-wrap: wrap;
+  }
+  .hero-change-num { color: var(--accent-deep); }
+  .hero-change-pct {
+    background: var(--accent-bg);
+    color: var(--accent-deep);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 14px; font-weight: 600;
+  }
+  .hero-change-period { color: var(--text-mute); font-weight: 500; }
+
+  /* ============ TIME RANGE TOGGLE ============ */
+  .range-toggle {
+    display: flex; gap: 4px;
+    margin: 24px 0 12px;
+    padding: 4px;
+    background: var(--bg-soft);
+    border-radius: 10px;
+    width: fit-content;
+  }
+  .range-btn {
+    background: none; border: none;
+    padding: 6px 14px;
+    font-family: var(--font-sans);
+    font-size: 13px; font-weight: 600;
+    color: var(--text-mute);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .range-btn:hover:not(:disabled) { color: var(--text); }
+  .range-btn.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .range-btn:disabled { color: var(--text-faint); cursor: not-allowed; opacity: 0.5; }
+
+  .chart-wrap { height: 240px; position: relative; margin-bottom: 32px; }
+  .chart-wrap.small { height: 180px; margin-bottom: 16px; }
+
+  /* ============ HIGHLIGHTS CARD ============ */
+  .highlights {
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 0;
+    height: fit-content;
+  }
+  .highlights-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 14px;
+  }
+  .highlights-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .highlights-list li {
+    font-size: 14px; line-height: 1.5;
+    color: var(--text);
+    font-weight: 500;
+    padding-left: 22px;
+    position: relative;
+  }
+  .highlights-list li::before {
+    content: '';
+    position: absolute; left: 0; top: 9px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-mute);
+  }
+
+  /* ============ SECTIONS ============ */
+  .section { margin-top: 40px; }
+  .section-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.4px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .section-subtitle { font-size: 14px; color: var(--text-mute); font-weight: 500; }
+
+  /* ============ STAT CARDS GRID ============ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .stat { background: var(--bg); padding: 16px 20px; display: flex; flex-direction: column; gap: 4px; }
+  .stat-label { font-size: 13px; color: var(--text-mute); font-weight: 500; }
+  .stat-value {
+    font-size: 16px; font-weight: 600;
+    color: var(--text);
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-value.gain { color: var(--accent-deep); }
+  .stat-value.warning { color: var(--warning); }
+  .stat-value.danger { color: var(--danger); }
+
+  /* ============ EXPANDABLE DETAIL ============ */
+  .detail-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none;
+    color: var(--text-mute);
+    font-family: var(--font-sans);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    padding: 8px 0;
+    margin-top: 16px;
+    transition: color 0.15s;
+  }
+  .detail-toggle:hover { color: var(--text); }
+  .detail-toggle .chev { transition: transform 0.2s; font-size: 11px; }
+  .detail-toggle.open .chev { transform: rotate(180deg); }
+  .detail-tray { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .detail-tray.open { max-height: 3000px; }
+  .detail-inner { padding-top: 20px; }
+
+  /* ============ COMPARATIVE BARS ============ */
+  .compare { margin-top: 16px; }
+  .compare-label {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-mute);
+    margin-bottom: 12px;
+  }
+  .compare-row {
+    display: grid;
+    grid-template-columns: 160px 1fr 90px;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-row.current .compare-name { color: var(--text); font-weight: 600; }
+  .compare-row.current .compare-bar-fill { background: var(--accent); }
+  .compare-row.current .compare-val { color: var(--text); font-weight: 700; }
+  .compare-name { color: var(--text-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .compare-bar { height: 6px; background: var(--bg-soft); border-radius: 3px; overflow: hidden; }
+  .compare-bar-fill { height: 100%; background: var(--border-strong); border-radius: 3px; transition: width 0.6s ease; }
+  .compare-val { color: var(--text-mute); text-align: right; font-family: var(--font-mono); font-weight: 600; }
+
+  /* ============ CHASE CARD GALLERY ============ */
+  .gallery {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .gallery.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .gallery.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 600px) {
+    .gallery.cols-5, .gallery.cols-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+  .gallery-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; flex-direction: column;
+    gap: 8px;
+  }
+  .gallery-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+  .gallery-card-img {
+    width: 100%; aspect-ratio: 2.5 / 3.5;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-soft);
+    position: relative;
+  }
+  .gallery-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gallery-rank {
+    position: absolute; top: 6px; left: 6px;
+    background: rgba(11, 14, 19, 0.85);
+    color: white;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 600;
+    padding: 2px 7px;
+  }
+  .gallery-card-value {
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 700;
+    color: var(--accent-deep);
+  }
+  .gallery-card-name {
+    font-size: 11px;
+    color: var(--text-mute);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .gallery-card-tier {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    cursor: help;
+  }
+  .gallery-card-tier.tier-sir { color: #DB2777; }
+  .gallery-card-tier.tier-ir { color: #2563EB; }
+  .gallery-card-tier.tier-ur { color: #7A8189; }
+  .gallery-card-tier.tier-hr { color: #DC2626; }
+  .gallery-card-tier.tier-mhr { color: #9333EA; }
+
+  /* ============ IN-TRAY CHART WRAPPER ============ */
+  .detail-chart-wrap { height: 200px; position: relative; margin-top: 12px; margin-bottom: 16px; }
+  .detail-chart-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    display: flex; align-items: center;
+  }
+
+  /* ============ INFO TOOLTIP ICONS ============ */
+  .info {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px;
+    border: 1px solid var(--text-faint);
+    border-radius: 50%;
+    color: var(--text-faint);
+    font-family: var(--font-sans);
+    font-size: 10px; font-weight: 700;
+    cursor: help;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    vertical-align: 1px;
+    margin-left: 6px;
+  }
+  .info:hover { color: var(--accent-deep); border-color: var(--accent-deep); }
+  .tooltip-bubble {
+    position: fixed;
+    width: 280px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 8px 24px rgba(11, 14, 19, 0.10), 0 2px 6px rgba(11, 14, 19, 0.06);
+    padding: 12px 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 9999;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .tooltip-bubble.visible { opacity: 1; }
+  .tooltip-title { font-size: 11px; font-weight: 700; color: var(--accent-deep); text-transform: uppercase; letter-spacing: 0.4px; }
+  .tooltip-body { font-size: 13px; color: var(--text-dim); line-height: 1.55; }
+
+  /* ============ EXPLAINER BLOCK ============ */
+  .explainer {
+    background: var(--bg-soft);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-top: 16px;
+    font-size: 13px; line-height: 1.5;
+    color: var(--text-dim);
+  }
+  .explainer strong { color: var(--text); font-weight: 600; }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-mute);
+    display: flex; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* ============ LIGHTBOX ============ */
+  .lightbox {
+    position: fixed; inset: 0;
+    background: rgba(11, 14, 19, 0.85);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10000;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    padding: 24px; cursor: zoom-out;
+  }
+  .lightbox.visible { opacity: 1; pointer-events: auto; }
+  .lightbox img {
+    max-width: 90vw; max-height: 90vh;
+    object-fit: contain;
+    border-radius: 12px;
+    transform: scale(0.95);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .lightbox.visible img { transform: scale(1); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <span class="brand-logo">PKMN</span>
+    <span class="updated">Updated May 20, 2026</span>
+  </div>
+
+  <!-- TOP ROW: HERO + HIGHLIGHTS -->
+  <div class="top-row">
+    <section class="hero">
+      <div class="hero-meta">
+        <div class="hero-image" id="heroImageWrap">
+          <img id="heroImage" alt="" />
+        </div>
+        <span class="hero-symbol" id="heroSymbol">—</span>
+      </div>
+      <h1 class="hero-name" id="heroName">—</h1>
+      <div class="hero-tags" id="heroTags"></div>
+      <div class="hero-price" id="heroPrice">—</div>
+      <div class="hero-change">
+        <span class="hero-change-num" id="heroChangeNum">—</span>
+        <span class="hero-change-pct" id="heroChangePct">—</span>
+        <span class="hero-change-period" id="heroChangePeriod">
+          <span id="heroChangePeriodText">—</span>
+          <span class="info" id="cagrInfo" data-tip-title="" data-tip="">i</span>
+        </span>
+      </div>
+      <div class="range-toggle">
+        <button class="range-btn" data-range="6M">6M</button>
+        <button class="range-btn" data-range="1Y">1Y</button>
+        <button class="range-btn active" data-range="ALL">ALL</button>
+      </div>
+      <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+    </section>
+
+    <div class="highlights">
+      <div class="highlights-title">Key facts</div>
+      <ul class="highlights-list" id="highlightsList"></ul>
+    </div>
+  </div>
+
+  <!-- SECTIONS WILL BE INJECTED HERE -->
+  <div id="sectionsContainer"></div>
+
+  <div class="footer">
+    <span>Data: PriceCharting · eBay · YouTube · Google Trends · TCGplayer Infinite · PSA</span>
+    <span>QSS 82 Thesis · 2026</span>
+  </div>
+
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <img id="lightboxImg" src="" alt="" />
+</div>
+
+<script>
+const DATA = {"products":{"sv151_etb":{"id":"sv151_etb","name":"SV 151 Elite Trainer Box","type":"sealed_etb","set_name":"Scarlet & Violet\u2014151","set_id":"sv3pt5","release_date":"2023-09-22","rotation_status":"rotated","market_price":609.99,"psa10_price":244.5,"price_history":[96.52,118.55,156.94,179.94,270.32,197.34,218.5,231.0,255.0,320.0,388.5,380.0,351.0,336.5,388.08,445.41,578.9,609.99,609.99],"price_first_idx":0,"earliest_chart_month":"2024-11","trends_history":[25,26,28,27,27,21,16,14,13,13,12,10,11,11,13,13,22,25,16],"trends_12m_avg":14.4,"youtube_views_12m":35977811,"ebay_active":75,"ebay_active_median":700.0,"ebay_sold_90d":239,"ebay_sold_90d_median":715.79,"ev_per_box":55.06,"ev_ratio":0.09,"top_chase_name":"Charizard ex","top_chase_value":447.55,"chase_cards":[{"rank":1,"name":"Charizard ex","number":"199/165","value":454.29,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/199_hires.png"},{"rank":2,"name":"Blastoise ex","number":"200/165","value":152.55,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/200_hires.png"},{"rank":3,"name":"Venusaur ex","number":"198/165","value":135.2,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/198_hires.png"},{"rank":4,"name":"Charmander","number":"168/165","value":113.45,"tier":"illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/168_hires.png"},{"rank":5,"name":"Zapdos ex","number":"202/165","value":101.11,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/202_hires.png"},{"rank":6,"name":"Pikachu","number":"173/165","value":88.02,"tier":"illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/173_hires.png"},{"rank":7,"name":"Bulbasaur","number":"166/165","value":86.88,"tier":"illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/166_hires.png"},{"rank":8,"name":"Alakazam ex","number":"201/165","value":85.77,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/201_hires.png"},{"rank":9,"name":"Charmeleon","number":"169/165","value":82.95,"tier":"illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/169_hires.png"},{"rank":10,"name":"Wartortle","number":"171/165","value":76.43,"tier":"illustration_rare","image":"https://images.pokemontcg.io/sv3pt5/171_hires.png"}],"box_image":"https://storage.googleapis.com/images.pricecharting.com/b9f018596fc96ec1af92d71d1a658b8aef0c685301af88f1e7b0839259e85f57/240.jpg","msrp":52.0,"reg_mark":"G","print_status":"out_of_print","oop_date":"Spring 2026","rotation_date":"2026-04-10","set_name_display":"Scarlet & Violet\u2014151","short_name":"SV 151 ETB","ticker":"SV151.ETB","cagr_pct":151.8,"total_appreciation_pct":1073.1,"months_since_release":32,"pull_rates_by_tier":{"hyper_rare":{"any":"1/51","specific":"1/154"},"special_illustration_rare":{"any":"1/32","specific":"1/225"},"illustration_rare":{"any":"1/12","specific":"1/188"},"ultra_rare":{"any":"1/16","specific":"1/248"},"double_rare":{"any":"1/8","specific":"1/90"},"foil_energy":{"any":"1/4","specific":"1/32"}}},"ascended_heroes_etb":{"id":"ascended_heroes_etb","name":"Ascended Heroes Elite Trainer Box","type":"sealed_etb","set_name":"Scarlet & Violet\u2014Ascended Heroes","set_id":"me2pt5","release_date":"2026-01-30","rotation_status":"standard","market_price":158.13,"psa10_price":null,"price_history":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,118.88,124.77,118.1,150.0,158.13],"price_first_idx":14,"earliest_chart_month":"2026-01","trends_history":[0,0,0,0,0,0,0,0,0,0,0,0,9,8,32,64,68,93,65],"trends_12m_avg":28.2,"youtube_views_12m":7019688,"ebay_active":209,"ebay_active_median":243.91,"ebay_sold_90d":239,"ebay_sold_90d_median":174.15,"ev_per_box":42.54,"ev_ratio":0.269,"top_chase_name":"Mega Gengar ex","top_chase_value":1420.83,"chase_cards":[{"rank":1,"name":"Mega Gengar ex","number":"284/217","value":1344.0,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me2pt5-284/large"},{"rank":2,"name":"Pikachu ex","number":"276/217","value":1300.91,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me2pt5-276/large"},{"rank":3,"name":"Mega Dragonite ex","number":"290/217","value":831.02,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me2pt5-290/large"},{"rank":4,"name":"Mega Charizard Y ex","number":"294/217","value":673.24,"tier":"mega_hyper_rare","image":"https://images.scrydex.com/pokemon/me2pt5-294/large"},{"rank":5,"name":"Pikachu ex","number":"277/217","value":460.48,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me2pt5-277/large"},{"rank":6,"name":"Team Rocket's Mewtwo ex","number":"281/217","value":456.58,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me2pt5-281/large"},{"rank":7,"name":"Mega Dragonite ex","number":"295/217","value":334.41,"tier":"mega_hyper_rare","image":"https://images.scrydex.com/pokemon/me2pt5-295/large"},{"rank":8,"name":"Lillie's Clefairy ex","number":"280/217","value":205.42,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me2pt5-280/large"},{"rank":9,"name":"N's Zoroark ex","number":"286/217","value":177.11,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me2pt5-286/large"},{"rank":10,"name":"Mega Feraligatr ex","number":"274/217","value":173.78,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me2pt5-274/large"}],"box_image":"https://storage.googleapis.com/images.pricecharting.com/3bzbjxje4gybk37w/240.jpg","msrp":49.99,"reg_mark":"I","print_status":"in_print","oop_date":null,"rotation_date":null,"set_name_display":"Ascended Heroes","short_name":"Ascended Heroes ETB","ticker":"AH.ETB","cagr_pct":3065.1,"total_appreciation_pct":216.3,"months_since_release":4,"pull_rates_by_tier":{"mega_hyper_rare":{"any":"1/540","specific":"1/1,080"},"special_illustration_rare":{"any":"1/70","specific":"1/1,533"},"illustration_rare":{"any":"1/9","specific":"1/293"},"mega_attack_rare":{"any":"1/29","specific":"1/202"},"ultra_rare":{"any":"1/21","specific":"1/291"},"double_rare":{"any":"1/5","specific":"1/191"}}},"surging_sparks_bb":{"id":"surging_sparks_bb","name":"Surging Sparks Booster Box","type":"sealed_bb","set_name":"Scarlet & Violet\u2014Surging Sparks","set_id":"sv8","release_date":"2024-11-08","rotation_status":"standard","market_price":251.31,"psa10_price":null,"price_history":[198.0,215.0,230.0,244.97,239.88,234.92,235.0,236.76,249.99,252.15,300.0,251.5,222.82,226.83,250.0,255.0,253.85,253.27,251.31],"price_first_idx":0,"earliest_chart_month":"2024-11","trends_history":[65,43,28,24,25,16,11,9,9,17,12,15,13,13,10,10,14,21,15],"trends_12m_avg":13.2,"youtube_views_12m":28951205,"ebay_active":263,"ebay_active_median":272.0,"ebay_sold_90d":240,"ebay_sold_90d_median":251.4,"ev_per_box":29.52,"ev_ratio":0.117,"top_chase_name":"Pikachu ex","top_chase_value":334.82,"chase_cards":[{"rank":1,"name":"Pikachu ex","number":"238/191","value":338.36,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv8/238_hires.png"},{"rank":2,"name":"Latias ex","number":"239/191","value":181.57,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv8/239_hires.png"},{"rank":3,"name":"Milotic","number":"237/191","value":132.61,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv8/237_hires.png"},{"rank":4,"name":"Pikachu ex","number":"247/191","value":89.41,"tier":"hyper_rare","image":"https://images.pokemontcg.io/sv8/247_hires.png"},{"rank":5,"name":"Hydreigon ex","number":"240/191","value":41.66,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv8/240_hires.png"},{"rank":6,"name":"Latios","number":"203/191","value":35.73,"tier":"illustration_rare","image":"https://images.pokemontcg.io/sv8/203_hires.png"},{"rank":7,"name":"Lisia's Appeal","number":"246/191","value":33.69,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv8/246_hires.png"},{"rank":8,"name":"Alolan Exeggutor ex","number":"242/191","value":31.89,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv8/242_hires.png"},{"rank":9,"name":"Pikachu ex","number":"219/191","value":30.64,"tier":"ultra_rare","image":"https://images.pokemontcg.io/sv8/219_hires.png"},{"rank":10,"name":"Durant ex","number":"236/191","value":29.72,"tier":"special_illustration_rare","image":"https://images.pokemontcg.io/sv8/236_hires.png"}],"box_image":"https://storage.googleapis.com/images.pricecharting.com/z376uvyql62aorb5/240.jpg","msrp":161.99,"reg_mark":"I","print_status":"in_print","oop_date":null,"rotation_date":null,"set_name_display":"Surging Sparks","short_name":"Surging Sparks BB","ticker":"SS.BB","cagr_pct":34.0,"total_appreciation_pct":55.1,"months_since_release":18,"pull_rates_by_tier":{"hyper_rare":{"any":"1/188","specific":"1/1,127"},"special_illustration_rare":{"any":"1/87","specific":"1/960"},"illustration_rare":{"any":"1/13","specific":"1/300"},"ultra_rare":{"any":"1/15","specific":"1/312"}}},"perfect_order_etb":{"id":"perfect_order_etb","name":"Perfect Order Elite Trainer Box (Mega Zygarde)","type":"sealed_etb","set_name":"Mega Evolution\u2014Perfect Order","set_id":"me3","release_date":"2026-03-27","rotation_status":"standard","market_price":70.0,"psa10_price":null,"price_history":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,77.0,68.27,70.0],"price_first_idx":16,"earliest_chart_month":"2026-03","trends_history":[4,3,3,3,3,4,3,2,3,3,5,5,4,4,16,11,74,100,65],"trends_12m_avg":24.3,"youtube_views_12m":3999059,"ebay_active":806,"ebay_active_median":78.99,"ebay_sold_90d":139,"ebay_sold_90d_median":67.74,"ev_per_box":15.01,"ev_ratio":0.214,"top_chase_name":"Meowth ex","top_chase_value":185.26,"chase_cards":[{"rank":1,"name":"Meowth ex","number":"121/088","value":199.89,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me3-121/large"},{"rank":2,"name":"Mega Zygarde ex","number":"124/088","value":168.58,"tier":"mega_hyper_rare","image":"https://images.scrydex.com/pokemon/me3-124/large"},{"rank":3,"name":"Mega Zygarde ex","number":"120/088","value":86.75,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me3-120/large"},{"rank":4,"name":"Mega Clefable ex","number":"119/088","value":79.99,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me3-119/large"},{"rank":5,"name":"Rosa's Encouragement","number":"123/088","value":76.11,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me3-123/large"},{"rank":6,"name":"Mega Starmie ex","number":"118/088","value":69.84,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me3-118/large"},{"rank":7,"name":"Jacinthe","number":"122/088","value":35.68,"tier":"special_illustration_rare","image":"https://images.scrydex.com/pokemon/me3-122/large"},{"rank":8,"name":"Clefairy","number":"094/088","value":31.03,"tier":"illustration_rare","image":"https://images.scrydex.com/pokemon/me3-94/large"},{"rank":9,"name":"Meowth ex","number":"107/088","value":19.26,"tier":"ultra_rare","image":"https://images.scrydex.com/pokemon/me3-107/large"},{"rank":10,"name":"Poke Pad","number":"113/088","value":16.4,"tier":"ultra_rare","image":"https://images.scrydex.com/pokemon/me3-113/large"}],"box_image":"https://storage.googleapis.com/images.pricecharting.com/bphquy73o2t6q7ye/240.jpg","msrp":49.99,"reg_mark":"J","print_status":"in_print","oop_date":null,"rotation_date":null,"set_name_display":"Mega Evolution\u2014Perfect Order","short_name":"Perfect Order ETB","ticker":"PO.ETB","cagr_pct":653.9,"total_appreciation_pct":40.0,"months_since_release":2,"pull_rates_by_tier":{"mega_hyper_rare":{"any":"1/1,786","specific":"1/1,786"},"special_illustration_rare":{"any":"1/81","specific":"1/487"},"illustration_rare":{"any":"1/9","specific":"1/98"},"ultra_rare":{"any":"1/12","specific":"1/211"},"double_rare":{"any":"1/5","specific":"1/43"}}},"bubble_mew":{"id":"bubble_mew","name":"Mew ex SIR #232/091 (Paldean Fates) \u2014 raw","type":"raw_single","set_name":"Scarlet & Violet\u2014Paldean Fates","set_id":"sv4pt5","release_date":"2024-01-26","rotation_status":"rotated","market_price":808.75,"psa10_price":2725.0,"price_history":[210.0,285.0,308.42,400.0,332.62,303.43,305.0,310.0,350.0,555.09,625.0,635.0,516.38,469.5,520.53,500.0,630.07,780.15,808.75],"price_first_idx":0,"earliest_chart_month":"2024-11","trends_history":[10,9,10,11,10,11,9,6,7,8,8,8,6,10,7,6,7,10,8],"trends_12m_avg":7.6,"youtube_views_12m":27989462,"ebay_active":16,"ebay_active_median":1077.5,"ebay_sold_90d":161,"ebay_sold_90d_median":641.32,"chase_cards":[],"box_image":"https://storage.googleapis.com/images.pricecharting.com/741c562c629f44c6f16cec378fae53d9e2246cddd9bed7e96a814e84d1294aa7/240.jpg","msrp":null,"reg_mark":"G","print_status":"out_of_print","oop_date":"Spring 2026","rotation_date":"2026-04-10","set_name_display":"Paldean Fates","short_name":"Bubble Mew","ticker":"PAF.MEW.232","grading_economics":{"raw_cost":808.75,"grading_fee_all_in":189,"break_even":997,"expected_return":78,"expected_graded_value":1075,"grades":[{"rank":1,"grade":"PSA 10","tier_label":"Gem Mint","value":2725.0,"probability":0.3,"net_pl":1728,"description":"The headline upside outcome. Requires perfect centering, corners, edges, and surface \u2014 modern SIRs achieve this approximately 30% of the time per PSA grading data."},{"rank":2,"grade":"PSA 9","tier_label":"Mint","value":375.0,"probability":0.5,"net_pl":-622,"description":"The most common outcome by frequency. Trades around half the raw card price \u2014 this outcome loses approximately $622 against the $997 all-in cost basis."},{"rank":3,"grade":"PSA 8","tier_label":"Near Mint-Mint","value":200.0,"probability":0.15,"net_pl":-797,"description":"Light play wear visible to inspection. This outcome loses ~$797 against the all-in cost basis."},{"rank":4,"grade":"Raw","tier_label":"Ungraded return","value":808.75,"probability":0.05,"net_pl":-188,"description":"Below-PSA-8 outcomes typically aren't encapsulated. Submitter ends up roughly back to the raw price minus the $189 grading fee."}]},"cagr_pct":134.3,"total_appreciation_pct":285.1}},"chart_labels":["Nov 24","Dec 24","Jan 25","Feb 25","Mar 25","Apr 25","May 25","Jun 25","Jul 25","Aug 25","Sep 25","Oct 25","Nov 25","Dec 25","Jan 26","Feb 26","Mar 26","Apr 26","May 26"]};
+</script>
+
+<script>
+// PARSE URL PARAM
+const urlParams = new URLSearchParams(window.location.search);
+const ACTIVE_PRODUCT_ID = urlParams.get('product') || 'sv151_etb';
+const product = DATA.products[ACTIVE_PRODUCT_ID];
+if (!product) {
+  document.body.innerHTML = '<div style="padding:64px;font-family:monospace;color:#FF3B30;">Invalid product ID: ' + ACTIVE_PRODUCT_ID + '</div>';
+  throw new Error('Invalid product');
+}
+
+// Robust product-type detection
+const IS_SINGLE_CARD = !!product.grading_economics;
+const IS_SEALED = !IS_SINGLE_CARD;
+
+const CHART_LABELS_FULL = DATA.chart_labels;
+
+const TIER_MAP = {
+  special_illustration_rare: { short: 'SIR', label: 'Special Illustration Rare', cls: 'tier-sir' },
+  mega_hyper_rare:           { short: 'MHR', label: 'Mega Hyper Rare', cls: 'tier-mhr' },
+  hyper_rare:                { short: 'HR',  label: 'Hyper Rare', cls: 'tier-hr' },
+  illustration_rare:         { short: 'IR',  label: 'Illustration Rare', cls: 'tier-ir' },
+  ultra_rare:                { short: 'UR',  label: 'Ultra Rare', cls: 'tier-ur' },
+  mega_attack_rare:          { short: 'MAR', label: 'Mega Attack Rare', cls: 'tier-hr' },
+  double_rare:               { short: '2R',  label: 'Double Rare', cls: 'tier-ur' },
+};
+
+// ============================================================
+// HEADER & METADATA
+// ============================================================
+document.getElementById('pageTitle').textContent = product.short_name + ' — Investment Overview';
+document.getElementById('heroImage').src = product.box_image;
+document.getElementById('heroImage').alt = product.short_name;
+document.getElementById('heroImageWrap').dataset.zoomable = 'true';
+document.getElementById('heroImageWrap').dataset.zoomSrc = product.box_image;
+document.getElementById('heroSymbol').textContent = product.ticker;
+document.getElementById('heroName').textContent = product.name;
+document.getElementById('heroPrice').textContent = '$' + product.market_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const heroTagsEl = document.getElementById('heroTags');
+if (product.print_status === 'out_of_print') {
+  heroTagsEl.innerHTML += '<span class="tag oop">Out of print</span>';
+} else {
+  heroTagsEl.innerHTML += '<span class="tag in-print">In print</span>';
+}
+if (product.rotation_status === 'rotated') {
+  heroTagsEl.innerHTML += '<span class="tag rotated">Rotated</span>';
+} else {
+  heroTagsEl.innerHTML += '<span class="tag legal">Standard legal</span>';
+}
+heroTagsEl.innerHTML += '<span class="tag product-type">' + (IS_SINGLE_CARD ? 'Single card · Raw' : 'Sealed product') + '</span>';
+
+// ============================================================
+// KEY FACTS (HIGHLIGHTS)
+// ============================================================
+const highlightsList = document.getElementById('highlightsList');
+function addHighlight(text) {
+  const li = document.createElement('li');
+  li.textContent = text;
+  highlightsList.appendChild(li);
+}
+const releasedNice = new Date(product.release_date).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+if (IS_SINGLE_CARD) {
+  addHighlight('Released ' + releasedNice + ' in ' + product.set_name_display + '. Current raw price $' + product.market_price + '.');
+} else if (product.msrp) {
+  addHighlight('Released ' + releasedNice + ' at $' + product.msrp + ' retail. Current market price $' + product.market_price + '.');
+}
+if (product.print_status === 'out_of_print') {
+  addHighlight('Pokémon stopped printing this set in ' + (product.oop_date || 'Spring 2026') + '.');
+}
+if (product.rotation_status === 'rotated') {
+  addHighlight('Rotated out of competitive Standard play on April 10, 2026.');
+}
+addHighlight((product.youtube_views_12m / 1_000_000).toFixed(2) + 'M YouTube views and ' + product.trends_12m_avg + '/100 average Google search interest over the past 12 months.');
+addHighlight(product.ebay_sold_90d + ' eBay sales over the past 90 days at a median price of $' + Math.round(product.ebay_sold_90d_median) + '.');
+</script>
+<script>
+// ============================================================
+// COMPARISON HELPERS
+// ============================================================
+function getComparisonRows(metricFn, ascending) {
+  const rows = Object.values(DATA.products).map(p => ({
+    id: p.id,
+    name: p.short_name,
+    value: metricFn(p),
+  })).filter(r => r.value !== undefined && r.value !== null);
+  rows.sort((a, b) => ascending ? a.value - b.value : b.value - a.value);
+  const maxVal = Math.max(...rows.map(r => r.value));
+  const minVal = Math.min(...rows.map(r => r.value));
+  return rows.map(r => ({
+    ...r,
+    pct: ascending
+      ? (minVal === maxVal ? 100 : (minVal / r.value) * 100)
+      : (maxVal === 0 ? 0 : (r.value / maxVal) * 100),
+    isCurrent: r.id === ACTIVE_PRODUCT_ID,
+  }));
+}
+
+function renderCompareRows(rows, valueFormatter) {
+  return rows.map(r =>
+    '<div class="compare-row' + (r.isCurrent ? ' current' : '') + '">' +
+    '<span class="compare-name">' + r.name + '</span>' +
+    '<div class="compare-bar"><div class="compare-bar-fill" style="width:' + r.pct.toFixed(1) + '%"></div></div>' +
+    '<span class="compare-val">' + valueFormatter(r.value) + '</span>' +
+    '</div>'
+  ).join('');
+}
+
+function fmtUsd(v) {
+  return '$' + v.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: v < 100 ? 2 : 0 });
+}
+function fmtUsdShort(v) { return '$' + Math.round(v).toLocaleString(); }
+function fmtMillions(v) { return (v / 1_000_000).toFixed(2) + 'M'; }
+
+const sectionsContainer = document.getElementById('sectionsContainer');
+const monthsSinceRelease = product.months_since_release || 0;
+const useTotalReturn = monthsSinceRelease < 12 && product.total_appreciation_pct !== undefined;
+
+// ============================================================
+// CAGR / TOTAL RETURN LABEL (for the hero pill)
+// ============================================================
+const cagrInfo = document.getElementById('cagrInfo');
+if (useTotalReturn) {
+  cagrInfo.dataset.tipTitle = 'Total return since launch';
+  cagrInfo.dataset.tip = 'This product launched ' + monthsSinceRelease + ' months ago — too short a window to meaningfully annualize, so the figure shown is the total return from launch MSRP to current market price.';
+} else {
+  cagrInfo.dataset.tipTitle = 'Annualized price change';
+  const msrpText = product.msrp ? '$' + product.msrp + ' MSRP' : 'first observed price';
+  cagrInfo.dataset.tip = 'Compound annual growth rate (CAGR) of ' + (product.cagr_pct || 0).toFixed(1) + '% means the price has grown at an annualized rate since release at ' + msrpText + '.';
+}
+
+// ============================================================
+// SECTION 1: PRICE PERFORMANCE
+// ============================================================
+const priceSection = document.createElement('section');
+priceSection.className = 'section';
+const cagrSubtitle = useTotalReturn
+  ? '+' + product.total_appreciation_pct.toFixed(1) + '% total · ' + monthsSinceRelease + 'mo'
+  : '+' + (product.cagr_pct || 0).toFixed(1) + '% annualized';
+
+const launchPriceLabel = product.msrp ? 'Retail at launch' : 'First observed price';
+const firstObservedPrice = (function() {
+  for (let i = 0; i < product.price_history.length; i++) {
+    if (product.price_history[i] !== null) return product.price_history[i];
+  }
+  return 0;
+})();
+const launchPriceValue = product.msrp || firstObservedPrice;
+const marketLabel = IS_SINGLE_CARD ? 'Current raw price' : 'Market price';
+
+priceSection.innerHTML =
+  '<h2 class="section-title">' +
+    '<span>Price performance</span>' +
+    '<span class="section-subtitle">' + cagrSubtitle + '</span>' +
+  '</h2>' +
+  '<div class="stats-grid">' +
+    '<div class="stat">' +
+      '<div class="stat-label">' + launchPriceLabel + '</div>' +
+      '<div class="stat-value">$' + launchPriceValue.toFixed(2) + '</div>' +
+    '</div>' +
+    '<div class="stat">' +
+      '<div class="stat-label">' + marketLabel + '</div>' +
+      '<div class="stat-value">$' + product.market_price.toFixed(2) + '</div>' +
+    '</div>' +
+    '<div class="stat">' +
+      '<div class="stat-label">' + (useTotalReturn ? 'Total appreciation · ' + monthsSinceRelease + 'mo' : 'Total appreciation') + '</div>' +
+      '<div class="stat-value gain">+' + (product.total_appreciation_pct || 0).toFixed(1) + '%</div>' +
+    '</div>' +
+    '<div class="stat">' +
+      '<div class="stat-label">' + (useTotalReturn ? 'Annual rate (insufficient history)' : 'Annual rate (CAGR)') + '</div>' +
+      '<div class="stat-value ' + (useTotalReturn ? '' : 'gain') + '">' + (useTotalReturn ? '—' : '+' + (product.cagr_pct || 0).toFixed(1) + '%') + '</div>' +
+    '</div>' +
+  '</div>';
+sectionsContainer.appendChild(priceSection);
+
+// ============================================================
+// SECTION 2: DEMAND & LIQUIDITY
+// ============================================================
+const demandSection = document.createElement('section');
+demandSection.className = 'section';
+const salesRows = getComparisonRows(p => p.ebay_sold_90d, false);
+const medianRows = getComparisonRows(p => p.ebay_sold_90d_median, false);
+const activeRows = getComparisonRows(p => p.ebay_active, true);
+const askingRows = getComparisonRows(p => p.ebay_active_median, false);
+
+demandSection.innerHTML =
+  '<h2 class="section-title">' +
+    '<span>Demand &amp; liquidity</span>' +
+    '<span class="section-subtitle">' + product.ebay_sold_90d + ' sales · 90 days</span>' +
+  '</h2>' +
+  '<div class="stats-grid">' +
+    '<div class="stat"><div class="stat-label">Sales (last 90 days)</div><div class="stat-value">' + product.ebay_sold_90d + '</div></div>' +
+    '<div class="stat"><div class="stat-label">Median sale price</div><div class="stat-value">' + fmtUsd(product.ebay_sold_90d_median) + '</div></div>' +
+    '<div class="stat"><div class="stat-label">Active listings</div><div class="stat-value">' + product.ebay_active + '</div></div>' +
+    '<div class="stat"><div class="stat-label">Median asking price</div><div class="stat-value">' + fmtUsd(product.ebay_active_median) + '</div></div>' +
+  '</div>' +
+  '<button class="detail-toggle" data-target="demand-detail"><span>Compare to other products</span><span class="chev">▾</span></button>' +
+  '<div class="detail-tray" id="demand-detail">' +
+    '<div class="detail-inner">' +
+      '<div class="compare"><div class="compare-label">Sales volume (90 days)</div>' + renderCompareRows(salesRows, v => v.toLocaleString()) + '</div>' +
+      '<div class="compare"><div class="compare-label">Median sale price</div>' + renderCompareRows(medianRows, fmtUsd) + '</div>' +
+      '<div class="compare"><div class="compare-label">Active listings (fewer = tighter supply)</div>' + renderCompareRows(activeRows, v => v.toLocaleString()) + '</div>' +
+      '<div class="compare"><div class="compare-label">Median asking price (active listings)</div>' + renderCompareRows(askingRows, fmtUsd) + '</div>' +
+    '</div>' +
+  '</div>';
+sectionsContainer.appendChild(demandSection);
+
+// ============================================================
+// SECTION 3: CULTURAL ATTENTION
+// ============================================================
+const culturalSection = document.createElement('section');
+culturalSection.className = 'section';
+const ytRows = getComparisonRows(p => p.youtube_views_12m, false);
+const trendsRows = getComparisonRows(p => p.trends_12m_avg, false);
+
+culturalSection.innerHTML =
+  '<h2 class="section-title">' +
+    '<span>Cultural attention</span>' +
+    '<span class="section-subtitle">' + fmtMillions(product.youtube_views_12m) + ' YouTube views</span>' +
+  '</h2>' +
+  '<div class="stats-grid">' +
+    '<div class="stat"><div class="stat-label">YouTube views (12 mo)</div><div class="stat-value">' + fmtMillions(product.youtube_views_12m) + '</div></div>' +
+    '<div class="stat"><div class="stat-label">Search interest (12 mo avg)</div><div class="stat-value">' + product.trends_12m_avg + ' / 100</div></div>' +
+  '</div>' +
+  '<button class="detail-toggle" data-target="cultural-detail"><span>Show search history &amp; comparisons</span><span class="chev">▾</span></button>' +
+  '<div class="detail-tray" id="cultural-detail">' +
+    '<div class="detail-inner">' +
+      '<div class="compare-label" style="margin-bottom: 8px;">Google search interest</div>' +
+      '<div class="chart-wrap small"><canvas id="trendsChart"></canvas></div>' +
+      '<div class="compare"><div class="compare-label">YouTube views (12 months)</div>' + renderCompareRows(ytRows, fmtMillions) + '</div>' +
+      '<div class="compare"><div class="compare-label">Google search interest — 12-month average</div>' + renderCompareRows(trendsRows, v => v.toString()) + '</div>' +
+    '</div>' +
+  '</div>';
+sectionsContainer.appendChild(culturalSection);
+
+// ============================================================
+// SECTION 4: SUPPLY & SCARCITY
+// ============================================================
+const supplySection = document.createElement('section');
+supplySection.className = 'section';
+const printStatusText = product.print_status === 'out_of_print' ? 'Out of print' : 'In print';
+const rotationText = product.rotation_status === 'rotated' ? 'Rotated' : 'Standard legal';
+
+const oopTipText = product.print_status === 'out_of_print'
+  ? 'As of Spring 2026, Pokémon has officially stopped printing all G-mark sets. No new product will enter the market — existing supply is the long-term pool.'
+  : 'Currently in print — new product is still being produced and distributed.';
+
+const setNameForTip = product.set_name_display;
+
+supplySection.innerHTML =
+  '<h2 class="section-title">' +
+    '<span>Supply &amp; scarcity</span>' +
+    '<span class="section-subtitle">' + printStatusText + ', ' + rotationText.toLowerCase() + '</span>' +
+  '</h2>' +
+  '<div class="stats-grid">' +
+    '<div class="stat"><div class="stat-label">Print status<span class="info" data-tip-title="Print status" data-tip="' + oopTipText.replace(/"/g, '&quot;') + '">i</span></div><div class="stat-value ' + (product.print_status === 'out_of_print' ? 'danger' : 'gain') + '">' + printStatusText + '</div></div>' +
+    '<div class="stat"><div class="stat-label">Standard format<span class="info" data-tip-title="Tournament rotation" data-tip="Pokémon\'s competitive Standard format rotates older sets out of legal play roughly every two years. Rotated sets see player demand decline.">i</span></div><div class="stat-value ' + (product.rotation_status === 'rotated' ? 'warning' : '') + '">' + rotationText + '</div></div>' +
+    '<div class="stat"><div class="stat-label">Regulation mark<span class="info" data-tip-title="Regulation mark" data-tip="Pokémon assigns a letter to each new wave of sets. Sets within the same cohort tend to rotate together.">i</span></div><div class="stat-value">' + product.reg_mark + '</div></div>' +
+    '<div class="stat"><div class="stat-label">Set age</div><div class="stat-value">' + monthsSinceRelease + ' months</div></div>' +
+  '</div>';
+sectionsContainer.appendChild(supplySection);
+
+// ============================================================
+// SECTION 5: VALUE — branches sealed vs single card
+// ============================================================
+const valueSection = document.createElement('section');
+valueSection.className = 'section';
+
+if (IS_SEALED) {
+  // sealed products: EV / pack economics
+  const evRatioRows = Object.values(DATA.products)
+    .filter(p => !p.grading_economics && p.ev_ratio)
+    .map(p => ({ id: p.id, name: p.short_name, value: p.ev_ratio, isCurrent: p.id === ACTIVE_PRODUCT_ID }))
+    .sort((a, b) => a.value - b.value);
+  const evMax = Math.max(...evRatioRows.map(r => r.value));
+  evRatioRows.forEach(r => r.pct = (r.value / evMax) * 100);
+
+  valueSection.innerHTML =
+    '<h2 class="section-title">' +
+      '<span>Pack value</span>' +
+      '<span class="section-subtitle">EV / market price: ' + product.ev_ratio.toFixed(3) + '</span>' +
+    '</h2>' +
+    '<div class="stats-grid">' +
+      '<div class="stat"><div class="stat-label">Expected pull value<span class="info" data-tip-title="Expected pull value" data-tip="The average dollar value of cards you\'d pull from one sealed box, computed from per-tier pull rates and the average value of cards at each tier.">i</span></div><div class="stat-value">' + fmtUsd(product.ev_per_box) + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Market price</div><div class="stat-value">' + fmtUsd(product.market_price) + '</div></div>' +
+      '<div class="stat"><div class="stat-label">EV / market price ratio<span class="info" data-tip-title="EV / price ratio" data-tip="Expected pull value divided by market price. Lower ratios indicate stronger collector premium — buyers pay more relative to expected pack contents.">i</span></div><div class="stat-value">' + product.ev_ratio.toFixed(3) + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Top chase card</div><div class="stat-value">' + product.top_chase_name + ' · $' + Math.round(product.top_chase_value) + '</div></div>' +
+    '</div>' +
+    '<button class="detail-toggle" data-target="value-detail"><span>Show top chase cards &amp; comparisons</span><span class="chev">▾</span></button>' +
+    '<div class="detail-tray" id="value-detail">' +
+      '<div class="detail-inner">' +
+        '<div class="explainer"><strong>What "EV / market price" means:</strong> Expected pull value ($' + product.ev_per_box.toFixed(2) + ') is the average dollar value of cards you\'d pull from a sealed pack, based on per-tier pull rates. The ratio ' + product.ev_ratio.toFixed(3) + ' means buyers are paying roughly $' + (1 / product.ev_ratio).toFixed(0) + ' for every $1 of expected pack contents — collector premium that prices in scarcity and chase-card appeal rather than pack-opening upside.</div>' +
+        '<div class="compare"><div class="compare-label">EV / market price ratio vs. other sealed products (lower = stronger collector premium)</div>' +
+          evRatioRows.map(r =>
+            '<div class="compare-row' + (r.isCurrent ? ' current' : '') + '">' +
+            '<span class="compare-name">' + r.name + '</span>' +
+            '<div class="compare-bar"><div class="compare-bar-fill" style="width:' + r.pct.toFixed(1) + '%"></div></div>' +
+            '<span class="compare-val">' + r.value.toFixed(3) + '</span>' +
+            '</div>'
+          ).join('') +
+        '</div>' +
+        '<div class="detail-chart-title" style="margin-top: 28px;">Pull pool distribution — top 10 chase card values</div>' +
+        '<div class="detail-chart-wrap"><canvas id="distributionChart"></canvas></div>' +
+        '<div class="detail-chart-title" style="margin-top: 16px;">Cumulative value — % of top-10 value captured by rank N</div>' +
+        '<div class="detail-chart-wrap"><canvas id="cumulativeChart"></canvas></div>' +
+        '<div class="compare-label" style="margin-top: 24px;">Top 10 chase cards · hover or tap a card for pull rate</div>' +
+        '<div class="gallery cols-5" id="chaseGallery"></div>' +
+      '</div>' +
+    '</div>';
+} else {
+  // single card: grading economics
+  const g = product.grading_economics;
+  valueSection.innerHTML =
+    '<h2 class="section-title">' +
+      '<span>Grading economics</span>' +
+      '<span class="section-subtitle">+$' + g.expected_return + ' expected return per submission</span>' +
+    '</h2>' +
+    '<div class="stats-grid">' +
+      '<div class="stat"><div class="stat-label">Expected return<span class="info" data-tip-title="Expected grading return" data-tip="The probability-weighted expected value of submitting this raw card to PSA, minus the raw card cost and grading fees. PSA outcomes are uncertain.">i</span></div><div class="stat-value gain">+$' + g.expected_return + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Raw card cost</div><div class="stat-value">$' + g.raw_cost.toFixed(2) + '</div></div>' +
+      '<div class="stat"><div class="stat-label">PSA Express + ship<span class="info" data-tip-title="Why Express tier" data-tip="The expected PSA 10 value exceeds $1,500, so this card requires PSA Express tier ($149 base) with declared-value upcharge and insured shipping. Value tier ($30) caps declared value at $499.">i</span></div><div class="stat-value">$' + g.grading_fee_all_in + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Expected graded value</div><div class="stat-value gain">$' + g.expected_graded_value.toLocaleString() + '</div></div>' +
+    '</div>' +
+    '<button class="detail-toggle" data-target="value-detail"><span>Show grade ladder &amp; outcome probabilities</span><span class="chev">▾</span></button>' +
+    '<div class="detail-tray" id="value-detail">' +
+      '<div class="detail-inner">' +
+        '<div class="explainer"><strong>What "+$' + g.expected_return + ' expected return" means:</strong> Buying this raw card at $' + g.raw_cost + ' and submitting for PSA grading yields different values per outcome. PSA 10 (30% probability) yields $2,725 and large profits. PSA 9 (50% probability) yields ~$375 and loses money. Multiplied by probabilities, expected graded value is $' + g.expected_graded_value + '. Subtracting $' + g.raw_cost + ' raw + $' + g.grading_fee_all_in + ' grading leaves <strong>+$' + g.expected_return + ' expected return</strong> — thin positive EV with high variance, driven almost entirely by PSA 10.</div>' +
+        '<div class="compare"><div class="compare-label">Grade outcome probabilities</div>' +
+          g.grades.map(grade => {
+            const pct = (grade.probability * 100).toFixed(0);
+            return '<div class="compare-row' + (grade.grade === 'PSA 10' ? ' current' : '') + '">' +
+              '<span class="compare-name">' + grade.grade + ' — ' + grade.tier_label + '</span>' +
+              '<div class="compare-bar"><div class="compare-bar-fill" style="width:' + (grade.probability * 200).toFixed(1) + '%"></div></div>' +
+              '<span class="compare-val">' + pct + '%</span>' +
+              '</div>';
+          }).join('') +
+        '</div>' +
+        '<div class="compare"><div class="compare-label">Market value per grade</div>' +
+          g.grades.slice().sort((a, b) => b.value - a.value).map(grade => {
+            const maxVal = Math.max(...g.grades.map(x => x.value));
+            const pct = (grade.value / maxVal) * 100;
+            return '<div class="compare-row' + (grade.grade === 'PSA 10' ? ' current' : '') + '">' +
+              '<span class="compare-name">' + grade.grade + ' — ' + grade.tier_label + '</span>' +
+              '<div class="compare-bar"><div class="compare-bar-fill" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+              '<span class="compare-val">$' + grade.value.toLocaleString() + '</span>' +
+              '</div>';
+          }).join('') +
+        '</div>' +
+        '<div class="detail-chart-title" style="margin-top: 28px;">Expected-value contribution by grade — probability × market value</div>' +
+        '<div class="detail-chart-wrap"><canvas id="distributionChart"></canvas></div>' +
+        '<div class="detail-chart-title" style="margin-top: 16px;">Cumulative probability of profit — only PSA 10 clears break-even</div>' +
+        '<div class="detail-chart-wrap"><canvas id="cumulativeChart"></canvas></div>' +
+        '<div class="compare-label" style="margin-top: 24px;">Grade ladder · hover or tap a card for outcome details</div>' +
+        '<div class="gallery cols-4" id="chaseGallery"></div>' +
+      '</div>' +
+    '</div>';
+}
+sectionsContainer.appendChild(valueSection);
+
+// ============================================================
+// MAIN PRICE CHART
+// ============================================================
+Chart.defaults.font.family = 'Inter';
+Chart.defaults.color = '#7A8189';
+
+function trimLeading(arr) {
+  const firstIdx = arr.findIndex(v => v !== null);
+  if (firstIdx <= 0) return { data: arr, labels: CHART_LABELS_FULL, firstIdx: 0 };
+  return { data: arr.slice(firstIdx), labels: CHART_LABELS_FULL.slice(firstIdx), firstIdx };
+}
+
+const priceCtx = document.getElementById('priceChart').getContext('2d');
+const trimmed = trimLeading(product.price_history);
+const priceChart = new Chart(priceCtx, {
+  type: 'line',
+  data: {
+    labels: trimmed.labels,
+    datasets: [{
+      data: trimmed.data,
+      borderColor: '#0B0E13',
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0.35,
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: '#0B0E13',
+      pointHoverBorderColor: '#FFFFFF',
+      pointHoverBorderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0B0E13',
+        titleColor: '#FFFFFF',
+        bodyColor: '#FFFFFF',
+        borderColor: 'transparent',
+        padding: 10,
+        displayColors: false,
+        titleFont: { family: 'Inter', size: 11, weight: '600' },
+        bodyFont: { family: 'JetBrains Mono', size: 13, weight: '600' },
+        callbacks: { label: (ctx) => '$' + ctx.parsed.y.toFixed(2) }
+      }
+    },
+    scales: { x: { display: false }, y: { display: false } }
+  }
+});
+
+// ============================================================
+// RANGE TOGGLE - recalc change/percentage to match window
+// ============================================================
+const availableMonths = product.price_history.length - trimmed.firstIdx;
+const RANGE_MONTHS = { '6M': 6, '1Y': 12, 'ALL': availableMonths };
+const RANGE_LABELS = { '6M': 'past 6 months', '1Y': 'past 12 months', 'ALL': 'all time' };
+
+const heroChangeNum = document.getElementById('heroChangeNum');
+const heroChangePct = document.getElementById('heroChangePct');
+const heroChangePeriodText = document.getElementById('heroChangePeriodText');
+
+function formatChange(deltaUsd, pct) {
+  const arrow = deltaUsd >= 0 ? '▲' : '▼';
+  const sign = deltaUsd >= 0 ? '' : '-';
+  const pctSign = pct >= 0 ? '+' : '';
+  return [
+    arrow + ' ' + sign + '$' + Math.abs(deltaUsd).toFixed(2),
+    pctSign + pct.toFixed(1) + '%',
+  ];
+}
+
+function applyRange(range) {
+  let n = RANGE_MONTHS[range];
+  if (n > availableMonths) n = availableMonths;
+  const slicedData = trimmed.data.slice(-n);
+  const slicedLabels = trimmed.labels.slice(-n);
+  priceChart.data.labels = slicedLabels;
+  priceChart.data.datasets[0].data = slicedData;
+  priceChart.update('none');
+
+  const current = product.market_price;
+  // for ALL with MSRP available, anchor to retail; otherwise anchor to first visible point
+  let anchor;
+  if (range === 'ALL' && product.msrp) {
+    anchor = product.msrp;
+  } else {
+    anchor = slicedData[0];
+  }
+  const delta = current - anchor;
+  const pct = (delta / anchor) * 100;
+  const [numStr, pctStr] = formatChange(delta, pct);
+  heroChangeNum.textContent = numStr;
+  heroChangePct.textContent = pctStr;
+  heroChangePeriodText.textContent = RANGE_LABELS[range];
+}
+
+// disable range buttons that exceed available data
+document.querySelectorAll('.range-btn').forEach(btn => {
+  const range = btn.dataset.range;
+  const months = RANGE_MONTHS[range];
+  if (months > availableMonths && range !== 'ALL') {
+    btn.disabled = true;
+    btn.title = 'Only ' + availableMonths + ' months of data available';
+  }
+  btn.addEventListener('click', () => {
+    if (btn.disabled) return;
+    applyRange(range);
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b === btn));
+  });
+});
+
+// initial render: ALL
+applyRange('ALL');
+
+// ============================================================
+// TRENDS CHART (lazy init when cultural tray opens)
+// ============================================================
+let trendsChartInitialized = false;
+function initTrendsChart() {
+  const trimmedT = trimLeading(product.trends_history);
+  const ctx = document.getElementById('trendsChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: trimmedT.labels,
+      datasets: [{
+        data: trimmedT.data,
+        borderColor: '#0B0E13',
+        backgroundColor: 'transparent',
+        fill: false,
+        tension: 0.35,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0B0E13',
+          titleColor: '#FFFFFF',
+          bodyColor: '#FFFFFF',
+          padding: 10,
+          displayColors: false,
+          titleFont: { family: 'Inter', size: 11, weight: '600' },
+          bodyFont: { family: 'JetBrains Mono', size: 12 },
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#B0B6BD', font: { size: 10 }, maxRotation: 0 }, border: { display: false } },
+        y: { min: 0, max: 100, grid: { color: '#EAEDF0' }, ticks: { color: '#B0B6BD', font: { size: 10 } }, border: { display: false } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// DISTRIBUTION + CUMULATIVE CHARTS (lazy init in value tray)
+// ============================================================
+let distChartInitialized = false;
+function initDistAndCum() {
+  const distCtx = document.getElementById('distributionChart').getContext('2d');
+  const cumCtx = document.getElementById('cumulativeChart').getContext('2d');
+
+  let labels, distData, cumData, cumColors;
+
+  if (IS_SEALED) {
+    const cards = product.chase_cards;
+    labels = cards.map(c => '#' + c.rank);
+    distData = cards.map(c => c.value);
+    const totalV = cards.reduce((s, c) => s + c.value, 0);
+    let running = 0;
+    cumData = cards.map(c => { running += c.value; return +(running / totalV * 100).toFixed(1); });
+    cumColors = cards.map(() => '#00A704');
+  } else {
+    const grades = product.grading_economics.grades;
+    const breakEven = product.grading_economics.break_even;
+    labels = grades.map(g => g.grade);
+    distData = grades.map(g => +(g.probability * g.value).toFixed(2));
+    let cum = 0;
+    cumData = grades.map(g => { cum += g.probability; return +(cum * 100).toFixed(1); });
+    cumColors = grades.map(g => g.value > breakEven ? '#00A704' : '#B0B6BD');
+  }
+
+  new Chart(distCtx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: distData, backgroundColor: '#0B0E13', borderRadius: 4, categoryPercentage: 0.85, barPercentage: 0.9 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0B0E13', titleColor: '#FFFFFF', bodyColor: '#FFFFFF',
+          padding: 10, displayColors: false,
+          titleFont: { family: 'Inter', size: 11, weight: '700' },
+          bodyFont: { family: 'JetBrains Mono', size: 12 },
+          callbacks: {
+            title: (ctx) => {
+              if (IS_SEALED) {
+                const c = product.chase_cards[ctx[0].dataIndex];
+                return '#' + c.rank + ' · ' + c.name;
+              } else {
+                const g = product.grading_economics.grades[ctx[0].dataIndex];
+                return g.grade + ' · ' + (g.probability * 100).toFixed(0) + '% likely';
+              }
+            },
+            label: (ctx) => {
+              if (IS_SEALED) {
+                const c = product.chase_cards[ctx.dataIndex];
+                return '$' + c.value.toFixed(2);
+              } else {
+                const g = product.grading_economics.grades[ctx.dataIndex];
+                return ['Value: $' + g.value, 'EV contribution: $' + (g.probability * g.value).toFixed(0)];
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#B0B6BD', font: { family: 'JetBrains Mono', size: 10 } }, border: { display: false } },
+        y: { grid: { color: '#EAEDF0' }, ticks: { color: '#B0B6BD', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '$' + v }, border: { display: false } }
+      }
+    }
+  });
+
+  new Chart(cumCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: cumData,
+        borderColor: IS_SEALED ? '#00A704' : '#0B0E13',
+        backgroundColor: 'transparent',
+        fill: false,
+        tension: IS_SEALED ? 0.25 : 0.15,
+        borderWidth: 2,
+        pointRadius: IS_SEALED ? 3 : 6,
+        pointBackgroundColor: cumColors,
+        pointBorderColor: '#FFFFFF',
+        pointBorderWidth: 1.5,
+        pointHoverRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0B0E13', titleColor: '#FFFFFF', bodyColor: '#FFFFFF',
+          padding: 10, displayColors: false,
+          titleFont: { family: 'Inter', size: 11, weight: '700' },
+          bodyFont: { family: 'JetBrains Mono', size: 12 },
+          callbacks: {
+            title: (ctx) => 'Through ' + labels[ctx[0].dataIndex],
+            label: (ctx) => {
+              if (IS_SEALED) return ctx.parsed.y + '% of top-10 value captured';
+              const g = product.grading_economics.grades[ctx.dataIndex];
+              return [ctx.parsed.y + '% of outcomes covered', g.value > product.grading_economics.break_even ? 'Profitable outcome' : 'Loss outcome'];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#B0B6BD', font: { family: 'JetBrains Mono', size: 10 } }, border: { display: false } },
+        y: { min: 0, max: 100, grid: { color: '#EAEDF0' }, ticks: { color: '#B0B6BD', font: { family: 'JetBrains Mono', size: 10 }, callback: v => v + '%' }, border: { display: false } }
+      }
+    }
+  });
+
+  // gallery population
+  const gal = document.getElementById('chaseGallery');
+  if (IS_SEALED) {
+    const pullRates = product.pull_rates_by_tier || {};
+    product.chase_cards.forEach(card => {
+      const tierInfo = TIER_MAP[card.tier] || { short: card.tier, label: card.tier, cls: '' };
+      const rate = pullRates[card.tier];
+      const tipText = rate
+        ? 'Pull rate: ' + rate.specific + ' specific, ' + rate.any + ' any. Card #' + card.number + '.'
+        : 'Card #' + card.number;
+      const div = document.createElement('div');
+      div.className = 'gallery-card';
+      div.dataset.zoomable = 'true';
+      div.dataset.zoomSrc = card.image;
+      div.innerHTML =
+        '<div class="gallery-card-img">' +
+          '<span class="gallery-rank">#' + card.rank + '</span>' +
+          '<img src="' + card.image + '" alt="' + card.name + '" loading="lazy" />' +
+        '</div>' +
+        '<div class="gallery-card-value">$' + card.value.toFixed(2) + '</div>' +
+        '<div class="gallery-card-name">' + card.name + '</div>' +
+        '<div class="gallery-card-tier ' + tierInfo.cls + '" data-tip-title="' + tierInfo.label + '" data-tip="' + tipText + '">' + tierInfo.short + (rate ? ' · ' + rate.specific : '') + '</div>';
+      gal.appendChild(div);
+    });
+  } else {
+    const grades = product.grading_economics.grades;
+    grades.forEach(g => {
+      const plSign = g.net_pl >= 0 ? '+' : '−';
+      const plColor = g.net_pl >= 0 ? '#00A704' : '#DC2626';
+      const tipText = g.description + ' Net P&L vs. $' + product.grading_economics.break_even + ' all-in cost basis: ' + plSign + '$' + Math.abs(g.net_pl) + '.';
+      const div = document.createElement('div');
+      div.className = 'gallery-card';
+      div.dataset.zoomable = 'true';
+      div.dataset.zoomSrc = product.box_image;
+      div.innerHTML =
+        '<div class="gallery-card-img">' +
+          '<span class="gallery-rank">#' + g.rank + '</span>' +
+          '<img src="' + product.box_image + '" alt="Bubble Mew ' + g.grade + '" loading="lazy" />' +
+        '</div>' +
+        '<div class="gallery-card-value">$' + g.value.toLocaleString() + '</div>' +
+        '<div class="gallery-card-name">' + g.grade + ' · ' + (g.probability * 100).toFixed(0) + '%</div>' +
+        '<div class="gallery-card-tier" data-tip-title="' + g.grade + ' — ' + g.tier_label + '" data-tip="' + tipText.replace(/"/g, '&quot;') + '">' +
+          '<span style="color: ' + plColor + '; font-weight: 700;">Net ' + plSign + '$' + Math.abs(g.net_pl) + '</span>' +
+        '</div>';
+      gal.appendChild(div);
+    });
+  }
+}
+
+// ============================================================
+// EXPAND TOGGLES
+// ============================================================
+document.querySelectorAll('.detail-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.target;
+    const tray = document.getElementById(targetId);
+    const isOpen = tray.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+    if (isOpen && targetId === 'cultural-detail' && !trendsChartInitialized) {
+      initTrendsChart();
+      trendsChartInitialized = true;
+    }
+    if (isOpen && targetId === 'value-detail' && !distChartInitialized) {
+      initDistAndCum();
+      distChartInitialized = true;
+    }
+  });
+});
+
+// ============================================================
+// TOOLTIPS
+// ============================================================
+let tooltipEl = null;
+function ensureTooltip() {
+  if (!tooltipEl) {
+    tooltipEl = document.createElement('div');
+    tooltipEl.className = 'tooltip-bubble';
+    tooltipEl.innerHTML = '<div class="tooltip-title"></div><div class="tooltip-body"></div>';
+    document.body.appendChild(tooltipEl);
+  }
+  return tooltipEl;
+}
+function showTooltip(el) {
+  const t = ensureTooltip();
+  t.querySelector('.tooltip-title').textContent = el.dataset.tipTitle || '';
+  t.querySelector('.tooltip-body').textContent = el.dataset.tip || '';
+  t.classList.add('visible');
+  const tRect = t.getBoundingClientRect();
+  const eRect = el.getBoundingClientRect();
+  let top = eRect.top - tRect.height - 8;
+  let left = eRect.left + eRect.width / 2 - tRect.width / 2;
+  if (top < 8) top = eRect.bottom + 8;
+  if (left < 8) left = 8;
+  if (left + tRect.width > window.innerWidth - 8) left = window.innerWidth - tRect.width - 8;
+  t.style.top = top + 'px';
+  t.style.left = left + 'px';
+}
+function hideTooltip() { if (tooltipEl) tooltipEl.classList.remove('visible'); }
+document.addEventListener('mouseenter', (e) => {
+  if (e.target.closest && e.target.dataset && e.target.dataset.tipTitle) showTooltip(e.target);
+}, true);
+document.addEventListener('mouseleave', (e) => {
+  if (e.target.closest && e.target.dataset && e.target.dataset.tipTitle) hideTooltip();
+}, true);
+
+// ============================================================
+// LIGHTBOX
+// ============================================================
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+document.addEventListener('click', (e) => {
+  const z = e.target.closest('[data-zoomable]');
+  if (z) {
+    lightboxImg.src = z.dataset.zoomSrc;
+    lightbox.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+});
+lightbox.addEventListener('click', () => {
+  lightbox.classList.remove('visible');
+  document.body.style.overflow = '';
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    lightbox.classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+});
+
+</script>
+
+<script>
+// Telemetry: post events to parent window if running in iframe with telemetry=1
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('telemetry') !== '1') return;
+  if (window.parent === window) return;  // not in iframe
+  function post(event_type, event_target, event_value) {
+    try {
+      window.parent.postMessage({
+        _channel: 'dashboard_event',
+        event_type: event_type,
+        event_target: event_target,
+        event_value: event_value || null,
+      }, '*');
+    } catch (e) { /* ignore */ }
+  }
+  // delegate-listen for common interactions
+  // click events: tabs, expand toggles, range buttons, chips, chase carousel buttons, gallery cards
+  document.addEventListener('click', function(e) {
+    const tab = e.target.closest('.tab');
+    if (tab) { post('tab_click', tab.dataset.target || tab.textContent.trim(), null); return; }
+    const rangeBtn = e.target.closest('.range-btn');
+    if (rangeBtn) { post('range_click', rangeBtn.dataset.range || rangeBtn.textContent.trim(), null); return; }
+    const detail = e.target.closest('.detail-toggle');
+    if (detail) { post('expand_click', detail.dataset.target || '', null); return; }
+    const chip = e.target.closest('.chip');
+    if (chip) { post('compare_chip_click', (chip.dataset.cmp || '') + ':' + (chip.dataset.chart || ''), null); return; }
+    const carBtn = e.target.closest('.carousel-btn');
+    if (carBtn) { post('carousel_click', carBtn.id || 'carousel', null); return; }
+    const gCard = e.target.closest('.gallery-card');
+    if (gCard) { post('gallery_card_click', '', null); return; }
+    const zoom = e.target.closest('[data-zoomable]');
+    if (zoom) { post('image_zoom', zoom.dataset.zoomSrc || '', null); return; }
+  });
+  // tooltip hovers: emit one event per hover with duration
+  const hoverStart = new WeakMap();
+  document.addEventListener('mouseenter', function(e) {
+    if (e.target.dataset && e.target.dataset.tipTitle) {
+      hoverStart.set(e.target, performance.now());
+    }
+  }, true);
+  document.addEventListener('mouseleave', function(e) {
+    if (e.target.dataset && e.target.dataset.tipTitle) {
+      const start = hoverStart.get(e.target);
+      if (start) {
+        const duration = Math.round(performance.now() - start);
+        if (duration > 200) {  // ignore drive-by hovers
+          post('tooltip_hover', e.target.dataset.tipTitle || '', { duration_ms: duration });
+        }
+        hoverStart.delete(e.target);
+      }
+    }
+  }, true);
+  // section visibility: emit when each section becomes visible
+  // (used by both Style A which has sections, and Style B which has sections too)
+  const seenSections = new Set();
+  const sectionObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(en) {
+      if (en.isIntersecting && !seenSections.has(en.target)) {
+        seenSections.add(en.target);
+        const sectionName = en.target.id || en.target.querySelector('.section-title')?.textContent?.trim() || '';
+        post('section_first_view', sectionName, null);
+      }
+    });
+  }, { threshold: 0.25 });
+  // observe after a brief delay so DOM is populated
+  setTimeout(function() {
+    document.querySelectorAll('.section').forEach(function(s) { sectionObs.observe(s); });
+  }, 500);
+  // page loaded event
+  post('dashboard_ready', window.location.search, null);
+})();
+</script>
+
+</body>
+</html>

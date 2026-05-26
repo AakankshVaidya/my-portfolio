@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokémon Investment Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!--
+  ============================================================
+  SUPABASE CONFIGURATION
+  ============================================================
+  When you have a Supabase project ready:
+  1. Replace SUPABASE_URL with your project URL (looks like https://abcdefgh.supabase.co)
+  2. Replace SUPABASE_ANON_KEY with your anon/public key (a long JWT starting with eyJ...)
+  3. Both values come from: Supabase dashboard → Project Settings → API
+  4. The anon key is safe to expose in client code (your RLS policies enforce write-only access)
+  5. Do NOT paste the service_role key here — that key has admin access and belongs only in analysis notebooks
+
+  Until these are set to real values, the wrapper runs in "dry-run" mode:
+  every database call is logged to the console instead of being sent to Supabase.
+  This lets you test the entire flow locally without a Supabase project.
+-->
+<script>
+  const SUPABASE_URL = 'https://zsyqivqeibkftfkfxeyt.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzeXFpdnFlaWJrZnRma2Z4ZXl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwODM5NzcsImV4cCI6MjA5MzY1OTk3N30.dMVN8BRTr7LqrYOQQBcDModbn7KtBYM03hGSGjvqyKg';
+  const DRY_RUN = SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE';
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  :root {
+    --survey-bg: #F4F4F2;
+    --survey-bg-card: #FFFFFF;
+    --survey-text: #1F2937;
+    --survey-text-dim: #4B5563;
+    --survey-text-mute: #6B7280;
+    --survey-text-faint: #9CA3AF;
+    --survey-border: #E5E7EB;
+    --survey-border-strong: #D1D5DB;
+    --survey-accent: #4F46E5;
+    --survey-accent-deep: #4338CA;
+    --survey-accent-light: #EEF2FF;
+    --survey-success: #059669;
+    --survey-danger: #DC2626;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--survey-bg);
+    color: var(--survey-text);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .phase { display: none; min-height: 100vh; padding: 32px 24px; }
+  .phase.active { display: block; }
+  .phase.dashboard-phase { padding: 0; }
+
+  .survey-container {
+    max-width: 720px;
+    margin: 32px auto;
+    background: var(--survey-bg-card);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06), 0 8px 24px rgba(17, 24, 39, 0.04);
+    padding: 48px;
+  }
+  @media (max-width: 720px) {
+    .survey-container { padding: 32px 24px; margin: 16px auto; }
+  }
+
+  .progress-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--survey-border);
+    z-index: 1000;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--survey-accent);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .study-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--survey-accent-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+  h1.phase-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--survey-text);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  h2.section-heading {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--survey-text);
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--survey-border);
+  }
+  .phase-intro {
+    font-size: 15px;
+    color: var(--survey-text-dim);
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .question {
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--survey-border);
+  }
+  .question:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .question-number {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--survey-accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .question-text {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--survey-text);
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+  .question-help {
+    font-size: 13px;
+    color: var(--survey-text-mute);
+    margin-bottom: 16px;
+  }
+
+  .numeric-input {
+    width: 120px;
+    padding: 10px 14px;
+    border: 1px solid var(--survey-border-strong);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    color: var(--survey-text);
+    background: var(--survey-bg-card);
+  }
+  .numeric-input:focus {
+    outline: none;
+    border-color: var(--survey-accent);
+    box-shadow: 0 0 0 3px var(--survey-accent-light);
+  }
+
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border: 1px solid var(--survey-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--survey-bg-card);
+    gap: 12px;
+  }
+  .option:hover {
+    border-color: var(--survey-border-strong);
+    background: #FAFAF9;
+  }
+  .option input[type="radio"], .option input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border: 2px solid var(--survey-border-strong);
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: 1px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .option input[type="checkbox"] { border-radius: 4px; }
+  .option input[type="radio"]:checked {
+    border-color: var(--survey-accent);
+    background: var(--survey-accent);
+    box-shadow: inset 0 0 0 3px var(--survey-bg-card);
+  }
+  .option input[type="checkbox"]:checked {
+    border-color: var(--survey-accent);
+    background: var(--survey-accent);
+  }
+  .option input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -3px; left: 1px;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .option:has(input:checked) {
+    border-color: var(--survey-accent);
+    background: var(--survey-accent-light);
+  }
+  .option-label { font-size: 15px; color: var(--survey-text); font-weight: 500; }
+
+  .slider-wrap { margin-top: 8px; padding: 24px 8px 12px; }
+  .slider-track-wrap { position: relative; height: 48px; padding-top: 18px; }
+  .slider-track {
+    position: relative;
+    height: 8px;
+    background: var(--survey-border);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .slider-fill {
+    position: absolute;
+    height: 100%;
+    background: var(--survey-accent);
+    border-radius: 4px;
+    width: 0%;
+  }
+  .slider-thumb {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    width: 24px; height: 24px;
+    background: var(--survey-bg-card);
+    border: 3px solid var(--survey-accent);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(17, 24, 39, 0.15);
+    cursor: grab;
+    display: none;
+  }
+  .slider-thumb.placed { display: block; }
+  .slider-value-bubble {
+    position: absolute;
+    top: -32px;
+    transform: translateX(-50%);
+    padding: 4px 10px;
+    background: var(--survey-text);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
+    display: none;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .slider-thumb.placed + .slider-value-bubble { display: block; }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--survey-text-mute);
+    font-weight: 500;
+  }
+  .slider-hint {
+    font-size: 12px;
+    color: var(--survey-text-faint);
+    text-align: center;
+    margin-top: 12px;
+    font-style: italic;
+  }
+  .slider-thumb.placed ~ .slider-hint { visibility: hidden; }
+
+  .nav-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--survey-border);
+  }
+  .btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary { background: var(--survey-accent); color: white; }
+  .btn-primary:hover { background: var(--survey-accent-deep); transform: translateY(-1px); }
+  .btn-primary:disabled {
+    background: var(--survey-border-strong);
+    color: var(--survey-text-faint);
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-large { padding: 16px 36px; font-size: 16px; }
+
+  .welcome-list { list-style: none; margin: 24px 0; }
+  .welcome-list li {
+    padding: 12px 0 12px 36px;
+    position: relative;
+    font-size: 15px;
+    color: var(--survey-text-dim);
+    line-height: 1.5;
+    border-bottom: 1px solid var(--survey-border);
+  }
+  .welcome-list li:last-child { border-bottom: none; }
+  .welcome-list li::before {
+    content: '';
+    position: absolute;
+    left: 4px; top: 19px;
+    width: 18px; height: 18px;
+    background: var(--survey-accent-light);
+    border-radius: 50%;
+  }
+  .welcome-list li::after {
+    content: '';
+    position: absolute;
+    left: 9px; top: 24px;
+    width: 8px; height: 8px;
+    background: var(--survey-accent);
+    border-radius: 50%;
+  }
+  .consent-box {
+    background: var(--survey-bg);
+    border: 1px solid var(--survey-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 24px 0;
+    font-size: 14px;
+    color: var(--survey-text-dim);
+    line-height: 1.6;
+  }
+  .consent-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .consent-check input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border: 2px solid var(--survey-border-strong);
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 1px;
+    position: relative;
+  }
+  .consent-check input[type="checkbox"]:checked {
+    border-color: var(--survey-accent);
+    background: var(--survey-accent);
+  }
+  .consent-check input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -3px; left: 2px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .consent-text {
+    font-size: 14px;
+    color: var(--survey-text);
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  .transition {
+    max-width: 540px;
+    margin: 80px auto;
+    text-align: center;
+    padding: 48px 32px;
+  }
+  .transition-icon {
+    width: 64px; height: 64px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: var(--survey-accent-light);
+    color: var(--survey-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700;
+  }
+  .transition h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--survey-text);
+    margin-bottom: 12px;
+    letter-spacing: -0.4px;
+  }
+  .transition p {
+    font-size: 16px;
+    color: var(--survey-text-dim);
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .completion {
+    max-width: 540px;
+    margin: 80px auto;
+    text-align: center;
+    padding: 48px 32px;
+  }
+  .completion-icon {
+    width: 80px; height: 80px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: var(--survey-success);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+  }
+
+  /* ============ DASHBOARD HOST + IFRAME ============ */
+  .dashboard-host {
+    position: relative;
+    width: 100%;
+    background: var(--survey-bg);
+  }
+  .dashboard-iframe {
+    display: block;
+    width: 100%;
+    border: none;
+    min-height: 100vh;
+    background: white;
+  }
+
+  .dblock-wrap {
+    background: var(--survey-bg);
+    padding: 48px 24px 96px;
+  }
+  .dblock-container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--survey-bg-card);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06), 0 8px 24px rgba(17, 24, 39, 0.04);
+    padding: 48px;
+  }
+  @media (max-width: 720px) {
+    .dblock-container { padding: 32px 24px; }
+  }
+
+  .error-msg {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: var(--survey-danger);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 16px;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  .dry-run-banner {
+    background: #FEF3C7;
+    border-bottom: 1px solid #FCD34D;
+    color: #92400E;
+    padding: 8px 16px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    position: fixed;
+    top: 3px; left: 0; right: 0;
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="dry-run-banner" id="dryRunBanner" style="display:none;">DRY RUN MODE — Supabase keys not configured. All writes are logged to console only.</div>
+
+<!-- ========== PHASE 1: WELCOME / CONSENT ========== -->
+<div class="phase active" id="phase-welcome">
+  <div class="survey-container">
+    <div class="study-eyebrow">Research Study</div>
+    <h1 class="phase-title">How does data presentation influence investment decisions?</h1>
+    <p class="phase-intro">
+      Thank you for taking the time to participate in my study. I'm a senior at Dartmouth College working on my Quantitative Social Science thesis, and I'm collecting data on how the visual design of financial dashboards affects the way people evaluate collectible products as investments. This study takes approximately 10 minutes to complete.
+    </p>
+
+    <h2 class="section-heading">What you'll do</h2>
+    <ul class="welcome-list">
+      <li>Answer 5 questions about your background and experience</li>
+      <li>Review two different dashboards showing data on Pokémon collectibles</li>
+      <li>Rate each one and tell me which factors influenced your judgment</li>
+      <li>Answer 2 final questions comparing your overall experience</li>
+    </ul>
+
+    <h2 class="section-heading">Consent and privacy</h2>
+    <div class="consent-box">
+      <strong>This is anonymous research.</strong> I do not collect your name, email, or any personally identifying information. Your responses are stored with a randomly generated identifier that I cannot link back to you.
+      <br><br>
+      I capture how you interact with the dashboards — what you click, how long you spend on each section — for academic analysis. This helps me understand how visual presentation affects financial judgment.
+      <br><br>
+      You may stop participating at any time by closing this window. Partial data from incomplete sessions may be retained but cannot be linked to you.
+      <br><br>
+      This study is part of my QSS 82 thesis project at Dartmouth College.
+    </div>
+
+    <label class="consent-check">
+      <input type="checkbox" id="consentCheck" />
+      <span class="consent-text">I am 18 or older and I consent to participate in this study.</span>
+    </label>
+
+    <div class="nav-row">
+      <button class="btn btn-primary btn-large" id="beginBtn" disabled>Begin study</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PHASE 2: PRE-SURVEY ========== -->
+<div class="phase" id="phase-pre-survey">
+  <div class="survey-container">
+    <div class="study-eyebrow">Background · 5 questions</div>
+    <h1 class="phase-title">A few questions about you</h1>
+    <p class="phase-intro">These help me understand the range of people taking part. There are no right or wrong answers.</p>
+
+    <div class="question">
+      <div class="question-number">Question 1 of 5</div>
+      <div class="question-text">What is your age?</div>
+      <div class="question-help">Enter a number.</div>
+      <input type="number" class="numeric-input" id="q1-age" min="18" max="120" placeholder="Age" />
+    </div>
+
+    <div class="question">
+      <div class="question-number">Question 2 of 5</div>
+      <div class="question-text">How comfortable are you reading charts and statistics?</div>
+      <div class="question-help">Select all that apply.</div>
+      <div class="options" id="q2-options">
+        <label class="option"><input type="checkbox" name="q2" value="0" /><span class="option-label">I'm not comfortable reading charts or statistics</span></label>
+        <label class="option"><input type="checkbox" name="q2" value="1" /><span class="option-label">I can read charts and statistics in news articles</span></label>
+        <label class="option"><input type="checkbox" name="q2" value="2" /><span class="option-label">I can comfortably read financial reports and earnings summaries</span></label>
+        <label class="option"><input type="checkbox" name="q2" value="3" /><span class="option-label">I can comfortably read statistical tables and figures in research papers</span></label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="question-number">Question 3 of 5</div>
+      <div class="question-text">A stock returns 10% in year 1 and -10% in year 2. After two years, your original $100 investment is worth:</div>
+      <div class="options" id="q3-options">
+        <label class="option"><input type="radio" name="q3" value="100" /><span class="option-label">$100</span></label>
+        <label class="option"><input type="radio" name="q3" value="more" /><span class="option-label">More than $100</span></label>
+        <label class="option"><input type="radio" name="q3" value="less" /><span class="option-label">Less than $100</span></label>
+        <label class="option"><input type="radio" name="q3" value="unsure" /><span class="option-label">I'm not sure</span></label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="question-number">Question 4 of 5</div>
+      <div class="question-text">How interested are you in collecting or investing in Pokémon trading cards?</div>
+      <div class="options" id="q4-options">
+        <label class="option"><input type="radio" name="q4" value="0" /><span class="option-label">Not at all</span></label>
+        <label class="option"><input type="radio" name="q4" value="1" /><span class="option-label">A little curious</span></label>
+        <label class="option"><input type="radio" name="q4" value="2" /><span class="option-label">Somewhat interested</span></label>
+        <label class="option"><input type="radio" name="q4" value="3" /><span class="option-label">Very interested</span></label>
+        <label class="option"><input type="radio" name="q4" value="4" /><span class="option-label">I already collect or invest in them</span></label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="question-number">Question 5 of 5</div>
+      <div class="question-text">Which best describes your experience investing money?</div>
+      <div class="options" id="q5-options">
+        <label class="option"><input type="radio" name="q5" value="0" /><span class="option-label">I've never invested in anything market-based</span></label>
+        <label class="option"><input type="radio" name="q5" value="1" /><span class="option-label">I have money invested, but others (parent, advisor, employer plan) manage the decisions</span></label>
+        <label class="option"><input type="radio" name="q5" value="2" /><span class="option-label">I actively invest occasionally and follow at least one market</span></label>
+        <label class="option"><input type="radio" name="q5" value="3" /><span class="option-label">I actively invest across multiple markets or asset types</span></label>
+      </div>
+    </div>
+
+    <div class="error-msg" id="preSurveyError">Please answer all questions before continuing.</div>
+
+    <div class="nav-row">
+      <button class="btn btn-primary btn-large" id="preSurveyNext">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PHASE 3: TRANSITION TO DASHBOARD 1 ========== -->
+<div class="phase" id="phase-transition-1">
+  <div class="transition">
+    <div class="transition-icon">1</div>
+    <h1>The first dashboard</h1>
+    <p>You'll now see investment data for a Pokémon collectible product. Take as long as you need to review it. When you're ready, scroll down to answer three questions about what you saw.</p>
+    <button class="btn btn-primary btn-large" id="transition1Next">Show me the dashboard</button>
+  </div>
+</div>
+
+<!-- ========== PHASE 4: DASHBOARD 1 + D-BLOCK ========== -->
+<div class="phase dashboard-phase" id="phase-dashboard-1">
+  <div class="dashboard-host">
+    <iframe class="dashboard-iframe" id="iframe1" title="Investment dashboard"></iframe>
+  </div>
+
+  <div class="dblock-wrap">
+    <div class="dblock-container">
+      <div class="study-eyebrow">Your impressions · 3 questions</div>
+      <h1 class="phase-title">What did you think?</h1>
+      <p class="phase-intro">Based on what you just saw, please answer these three questions about this product.</p>
+
+      <div class="question">
+        <div class="question-number">Question 1 of 3</div>
+        <div class="question-text">How strong is this as an investment?</div>
+        <div class="question-help">Click anywhere on the bar to place your rating.</div>
+        <div class="slider-wrap" id="d1-slider-1">
+          <div class="slider-track-wrap">
+            <div class="slider-track">
+              <div class="slider-fill"></div>
+              <div class="slider-thumb"></div>
+              <div class="slider-value-bubble">0</div>
+            </div>
+          </div>
+          <div class="slider-labels">
+            <span>0 — Very weak</span>
+            <span>100 — Very strong</span>
+          </div>
+          <div class="slider-hint">Click anywhere on the bar to set your rating</div>
+        </div>
+      </div>
+
+      <div class="question">
+        <div class="question-number">Question 2 of 3</div>
+        <div class="question-text">How likely would you be to actually invest your own money in this?</div>
+        <div class="question-help">Click anywhere on the bar to place your rating.</div>
+        <div class="slider-wrap" id="d2-slider-1">
+          <div class="slider-track-wrap">
+            <div class="slider-track">
+              <div class="slider-fill"></div>
+              <div class="slider-thumb"></div>
+              <div class="slider-value-bubble">0</div>
+            </div>
+          </div>
+          <div class="slider-labels">
+            <span>0 — Definitely would not</span>
+            <span>100 — Definitely would</span>
+          </div>
+          <div class="slider-hint">Click anywhere on the bar to set your rating</div>
+        </div>
+      </div>
+
+      <div class="question">
+        <div class="question-number">Question 3 of 3</div>
+        <div class="question-text">Which of these most influenced your rating?</div>
+        <div class="question-help">Select all that apply.</div>
+        <div class="options" id="d3-options-1"></div>
+      </div>
+
+      <div class="error-msg" id="dblock1Error">Please answer all three questions.</div>
+
+      <div class="nav-row">
+        <button class="btn btn-primary btn-large" id="dblock1Next">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PHASE 5: TRANSITION TO DASHBOARD 2 ========== -->
+<div class="phase" id="phase-transition-2">
+  <div class="transition">
+    <div class="transition-icon">2</div>
+    <h1>The second dashboard</h1>
+    <p>You'll now see data for a different product, presented in a different style. As before, take your time and then scroll down to answer three questions.</p>
+    <button class="btn btn-primary btn-large" id="transition2Next">Show me the dashboard</button>
+  </div>
+</div>
+
+<!-- ========== PHASE 6: DASHBOARD 2 + D-BLOCK ========== -->
+<div class="phase dashboard-phase" id="phase-dashboard-2">
+  <div class="dashboard-host">
+    <iframe class="dashboard-iframe" id="iframe2" title="Investment dashboard"></iframe>
+  </div>
+
+  <div class="dblock-wrap">
+    <div class="dblock-container">
+      <div class="study-eyebrow">Your impressions · 3 questions</div>
+      <h1 class="phase-title">What did you think?</h1>
+      <p class="phase-intro">Based on what you just saw, please answer these three questions about this product.</p>
+
+      <div class="question">
+        <div class="question-number">Question 1 of 3</div>
+        <div class="question-text">How strong is this as an investment?</div>
+        <div class="question-help">Click anywhere on the bar to place your rating.</div>
+        <div class="slider-wrap" id="d1-slider-2">
+          <div class="slider-track-wrap">
+            <div class="slider-track">
+              <div class="slider-fill"></div>
+              <div class="slider-thumb"></div>
+              <div class="slider-value-bubble">0</div>
+            </div>
+          </div>
+          <div class="slider-labels">
+            <span>0 — Very weak</span>
+            <span>100 — Very strong</span>
+          </div>
+          <div class="slider-hint">Click anywhere on the bar to set your rating</div>
+        </div>
+      </div>
+
+      <div class="question">
+        <div class="question-number">Question 2 of 3</div>
+        <div class="question-text">How likely would you be to actually invest your own money in this?</div>
+        <div class="question-help">Click anywhere on the bar to place your rating.</div>
+        <div class="slider-wrap" id="d2-slider-2">
+          <div class="slider-track-wrap">
+            <div class="slider-track">
+              <div class="slider-fill"></div>
+              <div class="slider-thumb"></div>
+              <div class="slider-value-bubble">0</div>
+            </div>
+          </div>
+          <div class="slider-labels">
+            <span>0 — Definitely would not</span>
+            <span>100 — Definitely would</span>
+          </div>
+          <div class="slider-hint">Click anywhere on the bar to set your rating</div>
+        </div>
+      </div>
+
+      <div class="question">
+        <div class="question-number">Question 3 of 3</div>
+        <div class="question-text">Which of these most influenced your rating?</div>
+        <div class="question-help">Select all that apply.</div>
+        <div class="options" id="d3-options-2"></div>
+      </div>
+
+      <div class="error-msg" id="dblock2Error">Please answer all three questions.</div>
+
+      <div class="nav-row">
+        <button class="btn btn-primary btn-large" id="dblock2Next">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PHASE 7: POST-SURVEY ========== -->
+<div class="phase" id="phase-post-survey">
+  <div class="survey-container">
+    <div class="study-eyebrow">Final 2 questions</div>
+    <h1 class="phase-title">Comparing the two dashboards</h1>
+    <p class="phase-intro">You've seen two dashboards. Please answer these final questions comparing them.</p>
+
+    <div class="question">
+      <div class="question-number">Question 1 of 2</div>
+      <div class="question-text">Which dashboard was easier to interpret?</div>
+      <div class="options" id="p1-options">
+        <label class="option"><input type="radio" name="p1" value="first" /><span class="option-label">The first dashboard</span></label>
+        <label class="option"><input type="radio" name="p1" value="second" /><span class="option-label">The second dashboard</span></label>
+        <label class="option"><input type="radio" name="p1" value="equal" /><span class="option-label">They felt about equal</span></label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="question-number">Question 2 of 2</div>
+      <div class="question-text">Which dashboard would you trust more if you were making a real investment decision?</div>
+      <div class="options" id="p2-options">
+        <label class="option"><input type="radio" name="p2" value="first" /><span class="option-label">The first dashboard</span></label>
+        <label class="option"><input type="radio" name="p2" value="second" /><span class="option-label">The second dashboard</span></label>
+        <label class="option"><input type="radio" name="p2" value="equal" /><span class="option-label">They felt about equal</span></label>
+      </div>
+    </div>
+
+    <div class="error-msg" id="postSurveyError">Please answer both questions.</div>
+
+    <div class="nav-row">
+      <button class="btn btn-primary btn-large" id="postSurveyNext">Submit study</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PHASE 8: COMPLETION ========== -->
+<div class="phase" id="phase-complete">
+  <div class="completion">
+    <div class="completion-icon">✓</div>
+    <h1 style="font-size:28px;font-weight:700;color:var(--survey-text);margin-bottom:12px;letter-spacing:-0.5px;">Thank you</h1>
+    <p style="font-size:16px;color:var(--survey-text-dim);line-height:1.6;margin-bottom:32px;">
+      Your responses have been recorded. I'll use this data in my QSS 82 thesis on how data presentation affects financial judgment.
+      <br><br>
+      You may now close this window.
+    </p>
+    <p style="font-size:13px;color:var(--survey-text-mute);font-family:'JetBrains Mono',monospace;">
+      Response ID: <span id="finalRespondentId">—</span>
+    </p>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// SUPABASE CLIENT SETUP
+// ============================================================
+let supabaseClient = null;
+if (!DRY_RUN) {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('[Supabase] Connected to', SUPABASE_URL);
+} else {
+  document.getElementById('dryRunBanner').style.display = 'block';
+  console.log('[Supabase] DRY RUN — no real writes will occur. Set SUPABASE_URL and SUPABASE_ANON_KEY in the HTML to enable real writes.');
+}
+
+async function supabaseInsert(table, row) {
+  if (DRY_RUN) {
+    console.log(`[Supabase DRY RUN] INSERT into ${table}:`, row);
+    return { data: [row], error: null };
+  }
+  const { data, error } = await supabaseClient.from(table).insert(Array.isArray(row) ? row : [row]);
+  if (error) console.error(`[Supabase] INSERT ${table} failed:`, error);
+  return { data, error };
+}
+
+async function supabaseUpdate(table, id_col, id_val, patch) {
+  if (DRY_RUN) {
+    console.log(`[Supabase DRY RUN] UPDATE ${table} WHERE ${id_col}=${id_val}:`, patch);
+    return { data: [patch], error: null };
+  }
+  const { data, error } = await supabaseClient.from(table).update(patch).eq(id_col, id_val);
+  if (error) console.error(`[Supabase] UPDATE ${table} failed:`, error);
+  return { data, error };
+}
+
+// ============================================================
+// SESSION STATE
+// ============================================================
+const PHASE_PROGRESS = {
+  'welcome': 0, 'pre-survey': 10, 'transition-1': 25, 'dashboard-1': 40,
+  'transition-2': 55, 'dashboard-2': 70, 'post-survey': 90, 'complete': 100,
+};
+
+function uuid() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+
+const session = {
+  respondent_id: uuid(),
+  created_at: new Date().toISOString(),
+  session_start_ms: performance.now(),
+  consented_at: null,
+  completed_at: null,
+  completion_status: 'started',
+
+  // randomization
+  product_1: null,
+  product_2: null,
+  dashboard_order: null,
+  style_1: null,
+  style_2: null,
+  d3_option_order_1: null,
+  d3_option_order_2: null,
+  randomization_seed: null,
+
+  // browser
+  user_agent: navigator.userAgent,
+  screen_width: window.screen.width,
+  screen_height: window.screen.height,
+  viewport_width: window.innerWidth,
+  viewport_height: window.innerHeight,
+
+  // responses & sessions
+  pre_survey: null,
+  dashboard_session_1: null,
+  dashboard_session_2: null,
+  post_survey: null,
+
+  // event buffer
+  events: [],
+};
+
+// ============================================================
+// PRODUCT CATALOG
+// ============================================================
+const PRODUCTS = [
+  { id: 'sv151_etb',           name: 'Scarlet & Violet—151 ETB',     type: 'sealed' },
+  { id: 'surging_sparks_bb',   name: 'Surging Sparks Booster Box',   type: 'sealed' },
+  { id: 'ascended_heroes_etb', name: 'Ascended Heroes ETB',          type: 'sealed' },
+  { id: 'perfect_order_etb',   name: 'Perfect Order ETB',            type: 'sealed' },
+  { id: 'bubble_mew',          name: 'Bubble Mew — Mew ex 232/091',  type: 'single_card' },
+];
+
+function getD3Options(productType) {
+  const factor5 = productType === 'single_card'
+    ? { code: 'factor_5_grading', label: 'Potential value if professionally graded' }
+    : { code: 'factor_5_pack',    label: 'Value of cards inside the pack' };
+  return [
+    { code: 'price_history',       label: 'Price history and financial performance' },
+    { code: 'rarity_availability', label: 'How rare or hard to find it is' },
+    { code: 'demand_liquidity',    label: 'Demand and how easily it sells' },
+    { code: 'cultural',            label: 'Cultural relevance and community interest' },
+    factor5,
+  ];
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ============================================================
+// RANDOMIZATION
+// ============================================================
+function assignRandomization() {
+  session.randomization_seed = Math.random();
+  const shuffled = shuffle(PRODUCTS);
+  session.product_1 = shuffled[0].id;
+  session.product_2 = shuffled[1].id;
+  session.dashboard_order = Math.random() < 0.5 ? 'A_first' : 'B_first';
+  session.style_1 = session.dashboard_order === 'A_first' ? 'A' : 'B';
+  session.style_2 = session.dashboard_order === 'A_first' ? 'B' : 'A';
+  const p1Type = PRODUCTS.find(p => p.id === session.product_1).type;
+  const p2Type = PRODUCTS.find(p => p.id === session.product_2).type;
+  session.d3_option_order_1 = shuffle(getD3Options(p1Type)).map(o => o.code);
+  session.d3_option_order_2 = shuffle(getD3Options(p2Type)).map(o => o.code);
+
+  logEvent('randomization_assigned', 'system', {
+    product_1: session.product_1, product_2: session.product_2,
+    dashboard_order: session.dashboard_order,
+  });
+  console.log('[Randomization]', {
+    product_1: session.product_1, product_2: session.product_2,
+    dashboard_order: session.dashboard_order,
+    style_1: session.style_1, style_2: session.style_2,
+  });
+}
+
+// ============================================================
+// EVENT TELEMETRY
+// ============================================================
+function logEvent(event_type, event_target, value_obj) {
+  const event = {
+    event_id: uuid(),
+    respondent_id: session.respondent_id,
+    dashboard_position: getCurrentDashboardPosition(),
+    event_type: event_type,
+    event_target: event_target,
+    event_timestamp_ms: Math.round(performance.now() - session.session_start_ms),
+    event_value: value_obj || null,
+  };
+  session.events.push(event);
+}
+function getCurrentDashboardPosition() {
+  const activePhase = document.querySelector('.phase.active')?.id || '';
+  if (activePhase === 'phase-dashboard-1') return 1;
+  if (activePhase === 'phase-dashboard-2') return 2;
+  return null;
+}
+
+async function flushEvents(isFinal) {
+  // Skip flushes until consent is given - otherwise interaction_events FK constraint fails
+  // because the respondents row hasn't been inserted yet
+  if (!session.consented_at) return;
+  if (session.events.length === 0) return;
+  const batch = session.events.splice(0, session.events.length);
+  // attach session_id where known
+  batch.forEach(ev => {
+    if (ev.dashboard_position === 1 && session.dashboard_session_1) {
+      ev.session_id = session.dashboard_session_1.session_id;
+    } else if (ev.dashboard_position === 2 && session.dashboard_session_2) {
+      ev.session_id = session.dashboard_session_2.session_id;
+    }
+  });
+  console.log(`[Telemetry] flushing ${batch.length} events${isFinal ? ' (final)' : ''}`);
+  await supabaseInsert('interaction_events', batch);
+}
+setInterval(flushEvents, 8000);
+window.addEventListener('beforeunload', () => { flushEvents(true); });
+
+// listen for postMessage from dashboard iframes
+window.addEventListener('message', (event) => {
+  // accept only events from the iframes
+  const iframe1 = document.getElementById('iframe1');
+  const iframe2 = document.getElementById('iframe2');
+  if (event.source !== iframe1?.contentWindow && event.source !== iframe2?.contentWindow) return;
+  const msg = event.data;
+  if (!msg || msg._channel !== 'dashboard_event') return;
+  // log the event as it comes from the dashboard
+  logEvent(msg.event_type, msg.event_target, msg.event_value);
+});
+
+// ============================================================
+// PHASE NAVIGATION
+// ============================================================
+function showPhase(phaseId) {
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+  document.getElementById('phase-' + phaseId).classList.add('active');
+  document.getElementById('progressFill').style.width = (PHASE_PROGRESS[phaseId] || 0) + '%';
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  logEvent('phase_entered', phaseId, null);
+}
+
+// ============================================================
+// PHASE 1 - WELCOME
+// ============================================================
+const consentCheck = document.getElementById('consentCheck');
+const beginBtn = document.getElementById('beginBtn');
+consentCheck.addEventListener('change', () => {
+  beginBtn.disabled = !consentCheck.checked;
+});
+beginBtn.addEventListener('click', async () => {
+  session.consented_at = new Date().toISOString();
+  session.completion_status = 'consented';
+  assignRandomization();
+  await supabaseInsert('respondents', {
+    respondent_id: session.respondent_id,
+    created_at: session.created_at,
+    consented_at: session.consented_at,
+    completion_status: session.completion_status,
+    product_1: session.product_1,
+    product_2: session.product_2,
+    dashboard_order: session.dashboard_order,
+    style_1: session.style_1,
+    style_2: session.style_2,
+    randomization_seed: session.randomization_seed,
+    user_agent: session.user_agent,
+    screen_width: session.screen_width,
+    screen_height: session.screen_height,
+    viewport_width: session.viewport_width,
+    viewport_height: session.viewport_height,
+  });
+  enableBeforeUnloadWarning();
+  showPhase('pre-survey');
+});
+
+// beforeunload warning to prevent accidental closes mid-study
+function enableBeforeUnloadWarning() {
+  window.addEventListener('beforeunload', beforeUnloadHandler);
+}
+function disableBeforeUnloadWarning() {
+  window.removeEventListener('beforeunload', beforeUnloadHandler);
+}
+function beforeUnloadHandler(e) {
+  if (session.completion_status === 'completed') return;
+  e.preventDefault();
+  e.returnValue = '';
+}
+
+// ============================================================
+// PHASE 2 - PRE-SURVEY
+// ============================================================
+document.getElementById('preSurveyNext').addEventListener('click', async () => {
+  const age = parseInt(document.getElementById('q1-age').value, 10);
+  const q2Selections = Array.from(document.querySelectorAll('input[name="q2"]:checked')).map(el => parseInt(el.value, 10));
+  const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+  const q4 = document.querySelector('input[name="q4"]:checked')?.value;
+  const q5 = document.querySelector('input[name="q5"]:checked')?.value;
+  const errorEl = document.getElementById('preSurveyError');
+  if (!age || age < 1 || age > 120 || q2Selections.length === 0 || !q3 || !q4 || !q5) {
+    errorEl.classList.add('visible');
+    return;
+  }
+  errorEl.classList.remove('visible');
+  session.pre_survey = {
+    respondent_id: session.respondent_id,
+    age: age,
+    data_literacy_score: Math.max(...q2Selections),
+    data_literacy_selections: q2Selections,
+    financial_literacy_correct: q3 === 'less',
+    financial_literacy_answer: q3,
+    pokemon_interest: parseInt(q4, 10),
+    investment_experience: parseInt(q5, 10),
+    submitted_at: new Date().toISOString(),
+  };
+  session.completion_status = 'pre_survey_done';
+  await supabaseInsert('pre_survey_responses', session.pre_survey);
+  await supabaseUpdate('respondents', 'respondent_id', session.respondent_id, {
+    completion_status: session.completion_status,
+  });
+  showPhase('transition-1');
+});
+
+// ============================================================
+// PHASE 3 / 5 - TRANSITIONS
+// ============================================================
+document.getElementById('transition1Next').addEventListener('click', () => {
+  showPhase('dashboard-1');
+  loadDashboard(1);
+  renderD3Options(1);
+  initSlider('d1-slider-1');
+  initSlider('d2-slider-1');
+});
+
+document.getElementById('transition2Next').addEventListener('click', () => {
+  showPhase('dashboard-2');
+  loadDashboard(2);
+  renderD3Options(2);
+  initSlider('d1-slider-2');
+  initSlider('d2-slider-2');
+});
+
+// ============================================================
+// DASHBOARD LOADER
+// ============================================================
+function loadDashboard(position) {
+  const product_id = position === 1 ? session.product_1 : session.product_2;
+  const style      = position === 1 ? session.style_1 : session.style_2;
+  const iframe = document.getElementById('iframe' + position);
+  const baseFile = style === 'A' ? 'dashboard_a_template.html' : 'dashboard_b_template.html';
+  iframe.src = baseFile + '?product=' + product_id + '&telemetry=1';
+  logEvent('dashboard_loaded', `position_${position}_style_${style}_product_${product_id}`, {
+    position: position, style: style, product_id: product_id,
+  });
+}
+
+function renderD3Options(position) {
+  const productId = position === 1 ? session.product_1 : session.product_2;
+  const productType = PRODUCTS.find(p => p.id === productId).type;
+  const optionOrder = position === 1 ? session.d3_option_order_1 : session.d3_option_order_2;
+  const allOptions = getD3Options(productType);
+  const ordered = optionOrder.map(code => allOptions.find(o => o.code === code));
+  const container = document.getElementById('d3-options-' + position);
+  container.innerHTML = '';
+  ordered.forEach(opt => {
+    const label = document.createElement('label');
+    label.className = 'option';
+    label.innerHTML = '<input type="checkbox" name="d3-' + position + '" value="' + opt.code + '" /><span class="option-label">' + opt.label + '</span>';
+    container.appendChild(label);
+  });
+}
+
+// ============================================================
+// SLIDER
+// ============================================================
+function initSlider(wrapId) {
+  const wrap = document.getElementById(wrapId);
+  const trackWrap = wrap.querySelector('.slider-track-wrap');
+  const track = wrap.querySelector('.slider-track');
+  const fill = wrap.querySelector('.slider-fill');
+  const thumb = wrap.querySelector('.slider-thumb');
+  const bubble = wrap.querySelector('.slider-value-bubble');
+  let value = null;
+  let dragging = false;
+
+  function setValueFromX(clientX) {
+    const rect = track.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    value = Math.round(pct * 100);
+    fill.style.width = (pct * 100) + '%';
+    thumb.style.left = (pct * 100) + '%';
+    bubble.style.left = (pct * 100) + '%';
+    bubble.textContent = value;
+    if (!thumb.classList.contains('placed')) {
+      thumb.classList.add('placed');
+      const hint = wrap.querySelector('.slider-hint');
+      if (hint) hint.style.visibility = 'hidden';
+    }
+    wrap.dataset.value = value;
+    logEvent('slider_moved', wrapId, { value: value });
+  }
+
+  trackWrap.addEventListener('mousedown', (e) => {
+    setValueFromX(e.clientX);
+    dragging = true;
+  });
+  trackWrap.addEventListener('touchstart', (e) => {
+    setValueFromX(e.touches[0].clientX);
+    dragging = true;
+    e.preventDefault();
+  }, { passive: false });
+  window.addEventListener('mousemove', (e) => { if (dragging) setValueFromX(e.clientX); });
+  window.addEventListener('touchmove', (e) => { if (dragging) setValueFromX(e.touches[0].clientX); }, { passive: false });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('touchend', () => { dragging = false; });
+}
+
+function getSliderValue(wrapId) {
+  const v = document.getElementById(wrapId).dataset.value;
+  return v === undefined ? null : parseInt(v, 10);
+}
+
+// ============================================================
+// PHASE 4 - DASHBOARD 1 SUBMIT
+// ============================================================
+document.getElementById('dblock1Next').addEventListener('click', async () => {
+  const d1 = getSliderValue('d1-slider-1');
+  const d2 = getSliderValue('d2-slider-1');
+  const d3 = Array.from(document.querySelectorAll('input[name="d3-1"]:checked')).map(el => el.value);
+  const errorEl = document.getElementById('dblock1Error');
+  if (d1 === null || d2 === null || d3.length === 0) {
+    errorEl.classList.add('visible');
+    return;
+  }
+  errorEl.classList.remove('visible');
+  session.dashboard_session_1 = {
+    session_id: uuid(),
+    respondent_id: session.respondent_id,
+    dashboard_position: 1,
+    dashboard_style: session.style_1,
+    product_id: session.product_1,
+    d1_investment_quality: d1,
+    d2_investment_intent: d2,
+    d3_factor_influence: d3,
+    d3_option_order: session.d3_option_order_1,
+    submitted_at: new Date().toISOString(),
+  };
+  session.completion_status = 'dashboard1_done';
+  await supabaseInsert('dashboard_sessions', session.dashboard_session_1);
+  await supabaseUpdate('respondents', 'respondent_id', session.respondent_id, {
+    completion_status: session.completion_status,
+  });
+  await flushEvents();
+  showPhase('transition-2');
+});
+
+// ============================================================
+// PHASE 6 - DASHBOARD 2 SUBMIT
+// ============================================================
+document.getElementById('dblock2Next').addEventListener('click', async () => {
+  const d1 = getSliderValue('d1-slider-2');
+  const d2 = getSliderValue('d2-slider-2');
+  const d3 = Array.from(document.querySelectorAll('input[name="d3-2"]:checked')).map(el => el.value);
+  const errorEl = document.getElementById('dblock2Error');
+  if (d1 === null || d2 === null || d3.length === 0) {
+    errorEl.classList.add('visible');
+    return;
+  }
+  errorEl.classList.remove('visible');
+  session.dashboard_session_2 = {
+    session_id: uuid(),
+    respondent_id: session.respondent_id,
+    dashboard_position: 2,
+    dashboard_style: session.style_2,
+    product_id: session.product_2,
+    d1_investment_quality: d1,
+    d2_investment_intent: d2,
+    d3_factor_influence: d3,
+    d3_option_order: session.d3_option_order_2,
+    submitted_at: new Date().toISOString(),
+  };
+  session.completion_status = 'dashboard2_done';
+  await supabaseInsert('dashboard_sessions', session.dashboard_session_2);
+  await supabaseUpdate('respondents', 'respondent_id', session.respondent_id, {
+    completion_status: session.completion_status,
+  });
+  await flushEvents();
+  showPhase('post-survey');
+});
+
+// ============================================================
+// PHASE 7 - POST-SURVEY
+// ============================================================
+document.getElementById('postSurveyNext').addEventListener('click', async () => {
+  const p1 = document.querySelector('input[name="p1"]:checked')?.value;
+  const p2 = document.querySelector('input[name="p2"]:checked')?.value;
+  const errorEl = document.getElementById('postSurveyError');
+  if (!p1 || !p2) {
+    errorEl.classList.add('visible');
+    return;
+  }
+  errorEl.classList.remove('visible');
+  session.post_survey = {
+    respondent_id: session.respondent_id,
+    interpretability_choice: p1,
+    trust_choice: p2,
+    submitted_at: new Date().toISOString(),
+  };
+  session.completed_at = new Date().toISOString();
+  session.completion_status = 'completed';
+  await supabaseInsert('post_survey_responses', session.post_survey);
+  await supabaseUpdate('respondents', 'respondent_id', session.respondent_id, {
+    completion_status: session.completion_status,
+    completed_at: session.completed_at,
+  });
+  await flushEvents(true);
+  disableBeforeUnloadWarning();
+  document.getElementById('finalRespondentId').textContent = session.respondent_id.slice(0, 8);
+  showPhase('complete');
+});
+
+// ============================================================
+// INIT
+// ============================================================
+showPhase('welcome');
+console.log('[Session] respondent_id:', session.respondent_id);
+</script>
+</body>
+</html>

@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title id="pageTitle">Investment Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --surface: #09090b;
+    --surface-1: #111114;
+    --surface-2: #18181c;
+    --surface-3: #1f1f25;
+    --border: #27272e;
+    --border-bright: #35353f;
+    --text: #fafafa;
+    --text-dim: #a1a1aa;
+    --text-faint: #71717a;
+    --text-mute: #52525b;
+    --primary: #0C5CAB;
+    --primary-bright: #1e75d4;
+    --primary-glow: rgba(30, 117, 212, 0.15);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --gain: #10b981;
+    --loss: #ef4444;
+    --rotated: #f59e0b;
+    --oop: #ef4444;
+    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px;
+    --radius-sm: 6px; --radius: 10px; --radius-lg: 14px;
+    --cmp-1: rgba(168, 162, 158, 0.7);
+    --cmp-2: rgba(148, 163, 184, 0.7);
+    --cmp-3: rgba(212, 184, 154, 0.7);
+    --cmp-4: rgba(156, 163, 175, 0.7);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--surface);
+    background-image:
+      radial-gradient(ellipse 1200px 600px at 50% -200px, var(--primary-glow), transparent 70%),
+      radial-gradient(ellipse 800px 400px at 100% 30%, rgba(16, 185, 129, 0.04), transparent 60%);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .app { max-width: 1800px; margin: 0 auto; padding: 0 var(--s-5); }
+  @media (min-width: 1500px) { .app { padding: 0 var(--s-6); } }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: var(--s-4) 0; border-bottom: 1px solid var(--border); }
+  .brand { display: flex; align-items: baseline; gap: var(--s-4); }
+  .brand-logo { font-family: var(--font-mono); font-size: 12px; color: var(--primary-bright); font-weight: 600; letter-spacing: 1px; }
+  .brand-divider { color: var(--text-mute); }
+  .brand-name { font-size: 13px; color: var(--text-dim); }
+  .topbar-right { display: flex; gap: var(--s-5); font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); }
+  .topbar-right span strong { color: var(--text-mute); font-weight: 400; margin-right: 6px; }
+
+  .header { display: grid; grid-template-columns: 140px 1fr auto; gap: var(--s-5); align-items: start; padding: var(--s-6) 0 var(--s-5); }
+  .product-image {
+    width: 140px; height: 140px;
+    background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface-1) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .product-image-actual { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .product-image-fallback {
+    position: absolute; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    color: var(--text-mute); font-family: var(--font-mono); font-size: 10px;
+    text-align: center; padding: var(--s-3);
+  }
+  .product-info { padding-top: var(--s-2); }
+  .product-info h1 { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: var(--s-2); letter-spacing: -0.5px; }
+  .product-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); display: flex; gap: var(--s-4); margin-bottom: var(--s-3); }
+  .product-meta span strong { color: var(--text-mute); font-weight: 400; margin-right: var(--s-1); }
+  .badges { display: flex; gap: var(--s-2); margin-top: var(--s-3); flex-wrap: wrap; }
+  .badge {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    padding: 4px 10px; border-radius: 999px; border: 1px solid;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge.oop { color: var(--oop); border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); }
+  .badge.rotated { color: var(--rotated); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+  .badge.in-print { color: var(--success); border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.08); }
+  .badge.legal { color: var(--text-dim); border-color: var(--border-bright); background: var(--surface-2); }
+  .badge.sealed { color: var(--text-dim); border-color: var(--border-bright); background: var(--surface-2); }
+  .badge.sealed::before { background: var(--text-mute); }
+  .badge.in-print::before, .badge.legal::before { background: currentColor; }
+
+  .price-hero { text-align: right; padding-top: var(--s-2); }
+  .price-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: var(--s-2); }
+  .price-value { font-family: var(--font-mono); font-size: 42px; font-weight: 600; color: var(--text); line-height: 1; letter-spacing: -1px; }
+  .price-cagr { font-family: var(--font-mono); font-size: 14px; color: var(--gain); margin-top: var(--s-3); display: flex; align-items: center; justify-content: flex-end; gap: var(--s-2); }
+  .cagr-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 4px; font-weight: 600; }
+  .price-cagr-sub { color: var(--text-mute); font-size: 11px; display: flex; align-items: center; gap: 4px; }
+
+  .tabs {
+    display: flex; gap: 2px; padding: var(--s-1);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    position: sticky; top: var(--s-3); z-index: 50;
+    backdrop-filter: blur(20px); background: rgba(17, 17, 20, 0.85);
+    margin-bottom: var(--s-5); box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .tab {
+    flex: 1; padding: 10px var(--s-3); background: none; border: none;
+    color: var(--text-faint); font-family: var(--font-sans); font-size: 12px;
+    font-weight: 500; letter-spacing: 0.3px; cursor: pointer; border-radius: 6px;
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: var(--s-2);
+  }
+  .tab:hover { color: var(--text-dim); background: var(--surface-2); }
+  .tab.active { color: var(--text); background: var(--primary); box-shadow: 0 2px 8px rgba(12,92,171,0.3); }
+  .tab-num { font-family: var(--font-mono); font-size: 10px; opacity: 0.6; }
+
+  .section { margin-bottom: var(--s-5); scroll-margin-top: 80px; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: var(--s-3); padding-bottom: var(--s-2); border-bottom: 1px solid var(--border); }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: var(--s-2); }
+  .section-title::before { content: attr(data-num); color: var(--primary-bright); font-family: var(--font-mono); font-size: 11px; font-weight: 500; }
+  .section-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); }
+
+  .panel { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color 0.2s; }
+  .panel:hover { border-color: var(--border-bright); }
+  .panel-header {
+    padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; background: var(--surface); gap: var(--s-3); flex-wrap: wrap;
+  }
+  .panel-title { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
+  .panel-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); }
+  .panel-body { padding: var(--s-4); }
+
+  .compare-chips { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; flex-wrap: wrap; }
+  .compare-chips-label { color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.6px; margin-right: 4px; }
+  .chip {
+    padding: 4px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+    color: var(--text-faint); cursor: pointer; transition: all 0.15s;
+    font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .chip::before { content: ''; width: 8px; height: 2px; background: var(--text-mute); border-radius: 1px; transition: background 0.15s; }
+  .chip:hover { color: var(--text-dim); border-color: var(--border-bright); }
+  .chip.active { color: var(--text); background: var(--surface-3); border-color: var(--border-bright); }
+  .chip.active::before { background: var(--chip-color, currentColor); }
+
+  .chart-wrap { height: 240px; position: relative; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-3); }
+
+  .stat-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--s-4); transition: all 0.2s; }
+  .stat-card:hover { border-color: var(--border-bright); background: var(--surface-2); }
+  .stat-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: var(--s-2); }
+  .stat-value { font-family: var(--font-mono); font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.1; letter-spacing: -0.5px; }
+  .stat-value.lg { font-size: 28px; }
+  .stat-value.sm { font-size: 16px; }
+  .stat-detail { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); margin-top: var(--s-2); }
+
+  .comp { margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px dashed var(--border); }
+  .comp-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: var(--s-2); }
+  .comp-row { display: grid; grid-template-columns: 130px 1fr 70px; align-items: center; gap: var(--s-2); margin-bottom: 5px; font-family: var(--font-mono); font-size: 10px; }
+  .comp-row.current .comp-name { color: var(--text); font-weight: 600; }
+  .comp-row.current .comp-bar-fill { background: linear-gradient(90deg, var(--primary) 0%, var(--primary-bright) 100%); }
+  .comp-row.current .comp-val { color: var(--text); font-weight: 600; }
+  .comp-name { color: var(--text-faint); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .comp-bar { height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
+  .comp-bar-fill { height: 100%; background: var(--text-mute); border-radius: 3px; transition: width 0.6s ease; }
+  .comp-val { color: var(--text-faint); text-align: right; font-size: 10px; }
+
+  .value-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--s-3); }
+  .ratio-display { text-align: center; padding: var(--s-5) 0; }
+  .ratio-num {
+    font-family: var(--font-mono); font-size: 56px; font-weight: 700;
+    background: linear-gradient(135deg, var(--text) 0%, var(--primary-bright) 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1; letter-spacing: -2px;
+  }
+  .ratio-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 1px; margin-top: var(--s-2); display: inline-flex; align-items: center; gap: 6px; }
+  .ratio-context { font-family: var(--font-sans); font-size: 12px; color: var(--text-dim); margin-top: var(--s-4); padding: var(--s-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: left; line-height: 1.5; }
+  .ratio-context strong { color: var(--text); }
+
+  .distribution-block { margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--border); }
+  .distribution-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--s-3); }
+  .distribution-title { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
+  .distribution-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); }
+  .distribution-chart-wrap { height: 200px; position: relative; }
+
+  .carousel-wrap { padding: var(--s-3) var(--s-4) var(--s-4); }
+  .carousel-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); gap: var(--s-3); }
+  .carousel-pos { font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); }
+  .carousel-pos strong { color: var(--text); font-size: 13px; }
+  .carousel-btns { display: flex; gap: var(--s-2); }
+  .carousel-btn {
+    width: 32px; height: 32px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .carousel-btn:hover { color: var(--text); background: var(--surface-3); border-color: var(--border-bright); }
+  .carousel-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .chase-card {
+    text-align: center; padding: var(--s-3) var(--s-4) var(--s-4);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    transition: opacity 0.18s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+  }
+  .chase-card.slide-out-left { opacity: 0; transform: translateX(-40px); }
+  .chase-card.slide-out-right { opacity: 0; transform: translateX(40px); }
+  .chase-card.slide-in-from-left { opacity: 0; transform: translateX(-40px); }
+  .chase-card.slide-in-from-right { opacity: 0; transform: translateX(40px); }
+  .chase-card.settled { opacity: 1; transform: translateX(0); }
+  .chase-meta-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .chase-img {
+    width: 280px; height: 392px; margin: 0 auto var(--s-3);
+    border-radius: 12px; overflow: hidden; position: relative;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+    background: linear-gradient(145deg, #2a2438 0%, #1a1530 100%);
+  }
+  @media (min-width: 1500px) { .chase-img { width: 320px; height: 448px; } }
+  .chase-img-actual { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform 0.3s ease; }
+  .chase-card:hover .chase-img-actual { transform: scale(1.03); }
+  .chase-img-fallback { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--text-mute); font-family: var(--font-mono); font-size: 10px; text-align: center; padding: var(--s-3); line-height: 1.4; }
+  .chase-rank { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: var(--s-2); }
+  .chase-rank strong { color: var(--primary-bright); font-weight: 600; }
+  .chase-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .chase-num { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-bottom: var(--s-3); }
+  .chase-tier {
+    display: inline-block;
+    font-family: var(--font-mono); font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--warning);
+    border: 1px solid rgba(245,158,11,0.4); background: rgba(245,158,11,0.08);
+    padding: 2px 8px; border-radius: 999px; margin-bottom: var(--s-3); cursor: help;
+    transition: filter 0.15s;
+  }
+  .chase-tier:hover { filter: brightness(1.15); }
+  .chase-tier.tier-mhr { color: #c084fc; border-color: rgba(192,132,252,0.4); background: rgba(192,132,252,0.08); }
+  .chase-tier.tier-hr { color: #f472b6; border-color: rgba(244,114,182,0.4); background: rgba(244,114,182,0.08); }
+  .chase-tier.tier-ir { color: #60a5fa; border-color: rgba(96,165,250,0.4); background: rgba(96,165,250,0.08); }
+  .chase-tier.tier-ur { color: #a3a3a3; border-color: rgba(163,163,163,0.4); background: rgba(163,163,163,0.08); }
+  .chase-value { font-family: var(--font-mono); font-size: 26px; font-weight: 600; color: var(--gain); }
+  .chase-context { font-family: var(--font-mono); font-size: 10px; color: var(--text-mute); margin-top: var(--s-2); }
+
+  .carousel-dots { display: flex; justify-content: center; gap: 5px; margin-top: var(--s-3); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--surface-3); cursor: pointer; transition: all 0.15s; }
+  .dot.active { background: var(--primary-bright); width: 18px; border-radius: 3px; }
+  .dot:hover { background: var(--text-mute); }
+
+  .info {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 13px; height: 13px; border: 1px solid var(--text-mute);
+    border-radius: 50%; color: var(--text-mute);
+    font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+    cursor: help; transition: all 0.15s; flex-shrink: 0;
+  }
+  .info:hover { border-color: var(--primary-bright); color: var(--primary-bright); }
+
+  .tooltip-bubble {
+    position: fixed; width: 280px;
+    background: var(--surface-3); border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm); box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    padding: 10px 12px; opacity: 0; pointer-events: none;
+    transition: opacity 0.15s; z-index: 9999;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .tooltip-bubble.visible { opacity: 1; }
+  .tooltip-bubble-title { font-family: var(--font-mono); font-size: 9px; font-weight: 600; color: var(--primary-bright); text-transform: uppercase; letter-spacing: 0.8px; }
+  .tooltip-bubble-body { font-family: var(--font-sans); font-size: 11px; font-weight: 400; color: var(--text); line-height: 1.45; }
+
+  [data-zoomable] { cursor: zoom-in; transition: filter 0.15s; }
+  [data-zoomable]:hover { filter: brightness(1.08); }
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center;
+    z-index: 10000; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s; padding: var(--s-5); cursor: zoom-out;
+  }
+  .lightbox.visible { opacity: 1; pointer-events: auto; }
+  .lightbox img {
+    max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 12px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+    transform: scale(0.95);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .lightbox.visible img { transform: scale(1); }
+  .lightbox-close {
+    position: absolute; top: var(--s-5); right: var(--s-5);
+    width: 36px; height: 36px;
+    background: var(--surface-3); border: 1px solid var(--border-bright);
+    border-radius: 50%; color: var(--text);
+    font-family: var(--font-mono); font-size: 18px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .lightbox-close:hover { background: var(--surface-2); transform: scale(1.05); }
+
+  .footer { margin-top: var(--s-7); padding-top: var(--s-4); border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: 10px; color: var(--text-mute); display: flex; justify-content: space-between; }
+  .grading-pl-gain { color: var(--gain); font-weight: 600; }
+  .grading-pl-loss { color: var(--loss); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-logo">PKMN.INVEST</span>
+      <span class="brand-divider">/</span>
+      <span class="brand-name" id="brandSubname">Analytics</span>
+    </div>
+    <div class="topbar-right">
+      <span><strong>TICKER</strong><span id="topbarTicker">—</span></span>
+      <span><strong>RELEASED</strong><span id="topbarReleased">—</span></span>
+      <span><strong>UPDATED</strong>2026-05-20</span>
+    </div>
+  </div>
+
+  <div class="header">
+    <div class="product-image" id="productImageWrap">
+      <img id="productImage" alt="" class="product-image-actual" />
+      <div class="product-image-fallback">[Product Image]</div>
+    </div>
+    <div class="product-info">
+      <h1 id="productName">—</h1>
+      <div class="product-meta">
+        <span><strong>SET</strong><span id="metaSet">—</span></span>
+        <span><strong>TYPE</strong><span id="metaType">—</span></span>
+        <span><strong>REG MARK</strong><span id="metaRegMark">—</span></span>
+      </div>
+      <div class="badges" id="badges"></div>
+    </div>
+    <div class="price-hero">
+      <div class="price-label" id="priceLabel">Current Market Price</div>
+      <div class="price-value" id="priceValue">—</div>
+      <div class="price-cagr">
+        <span class="cagr-pill" id="cagrPill">—</span>
+        <span class="price-cagr-sub">
+          <span id="cagrSubLabel">—</span>
+          <span class="info" id="cagrInfo" data-tip-title="" data-tip="">i</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabsNav"></nav>
+
+  <div id="sectionsContainer"></div>
+
+  <div class="footer">
+    <span>Data sources: PriceCharting · eBay · YouTube Data API · Google Trends · TCGplayer Infinite · PSA</span>
+    <span>QSS 82 Thesis · 2026</span>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-hidden="true">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close">×</button>
+  <img id="lightboxImg" src="" alt="" />
+</div>
+
+<script>
+const DATA = {"products": {"sv151_etb": {"id": "sv151_etb", "name": "SV 151 Elite Trainer Box", "type": "sealed_etb", "set_name": "Scarlet & Violet\u2014151", "set_id": "sv3pt5", "release_date": "2023-09-22", "rotation_status": "rotated", "market_price": 609.99, "psa10_price": 244.5, "price_history": [96.52, 118.55, 156.94, 179.94, 270.32, 197.34, 218.5, 231.0, 255.0, 320.0, 388.5, 380.0, 351.0, 336.5, 388.08, 445.41, 578.9, 609.99, 609.99], "price_first_idx": 0, "earliest_chart_month": "2024-11", "trends_history": [25, 26, 28, 27, 27, 21, 16, 14, 13, 13, 12, 10, 11, 11, 13, 13, 22, 25, 16], "trends_12m_avg": 14.4, "youtube_views_12m": 35977811, "ebay_active": 75, "ebay_active_median": 700.0, "ebay_sold_90d": 239, "ebay_sold_90d_median": 715.79, "ev_per_box": 55.06, "ev_ratio": 0.09, "top_chase_name": "Charizard ex", "top_chase_value": 447.55, "chase_cards": [{"rank": 1, "name": "Charizard ex", "number": "199/165", "value": 454.29, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/199_hires.png"}, {"rank": 2, "name": "Blastoise ex", "number": "200/165", "value": 152.55, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/200_hires.png"}, {"rank": 3, "name": "Venusaur ex", "number": "198/165", "value": 135.2, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/198_hires.png"}, {"rank": 4, "name": "Charmander", "number": "168/165", "value": 113.45, "tier": "illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/168_hires.png"}, {"rank": 5, "name": "Zapdos ex", "number": "202/165", "value": 101.11, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/202_hires.png"}, {"rank": 6, "name": "Pikachu", "number": "173/165", "value": 88.02, "tier": "illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/173_hires.png"}, {"rank": 7, "name": "Bulbasaur", "number": "166/165", "value": 86.88, "tier": "illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/166_hires.png"}, {"rank": 8, "name": "Alakazam ex", "number": "201/165", "value": 85.77, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/201_hires.png"}, {"rank": 9, "name": "Charmeleon", "number": "169/165", "value": 82.95, "tier": "illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/169_hires.png"}, {"rank": 10, "name": "Wartortle", "number": "171/165", "value": 76.43, "tier": "illustration_rare", "image": "https://images.pokemontcg.io/sv3pt5/171_hires.png"}], "box_image": "https://storage.googleapis.com/images.pricecharting.com/b9f018596fc96ec1af92d71d1a658b8aef0c685301af88f1e7b0839259e85f57/240.jpg", "msrp": 52.0, "reg_mark": "G", "print_status": "out_of_print", "oop_date": "Spring 2026", "rotation_date": "2026-04-10", "set_name_display": "Scarlet & Violet\u2014151", "short_name": "SV 151 ETB", "ticker": "SV151.ETB", "cagr_pct": 151.8, "total_appreciation_pct": 1073.1, "months_since_release": 32, "pull_rates_by_tier": {"hyper_rare": {"any": "1/51", "specific": "1/154"}, "special_illustration_rare": {"any": "1/32", "specific": "1/225"}, "illustration_rare": {"any": "1/12", "specific": "1/188"}, "ultra_rare": {"any": "1/16", "specific": "1/248"}, "double_rare": {"any": "1/8", "specific": "1/90"}, "foil_energy": {"any": "1/4", "specific": "1/32"}}}, "ascended_heroes_etb": {"id": "ascended_heroes_etb", "name": "Ascended Heroes Elite Trainer Box", "type": "sealed_etb", "set_name": "Scarlet & Violet\u2014Ascended Heroes", "set_id": "me2pt5", "release_date": "2026-01-30", "rotation_status": "standard", "market_price": 158.13, "psa10_price": null, "price_history": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, 118.88, 124.77, 118.1, 150.0, 158.13], "price_first_idx": 14, "earliest_chart_month": "2026-01", "trends_history": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 8, 32, 64, 68, 93, 65], "trends_12m_avg": 28.2, "youtube_views_12m": 7019688, "ebay_active": 209, "ebay_active_median": 243.91, "ebay_sold_90d": 239, "ebay_sold_90d_median": 174.15, "ev_per_box": 42.54, "ev_ratio": 0.269, "top_chase_name": "Mega Gengar ex", "top_chase_value": 1420.83, "chase_cards": [{"rank": 1, "name": "Mega Gengar ex", "number": "284/217", "value": 1344.0, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-284/large"}, {"rank": 2, "name": "Pikachu ex", "number": "276/217", "value": 1300.91, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-276/large"}, {"rank": 3, "name": "Mega Dragonite ex", "number": "290/217", "value": 831.02, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-290/large"}, {"rank": 4, "name": "Mega Charizard Y ex", "number": "294/217", "value": 673.24, "tier": "mega_hyper_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-294/large"}, {"rank": 5, "name": "Pikachu ex", "number": "277/217", "value": 460.48, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-277/large"}, {"rank": 6, "name": "Team Rocket's Mewtwo ex", "number": "281/217", "value": 456.58, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-281/large"}, {"rank": 7, "name": "Mega Dragonite ex", "number": "295/217", "value": 334.41, "tier": "mega_hyper_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-295/large"}, {"rank": 8, "name": "Lillie's Clefairy ex", "number": "280/217", "value": 205.42, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-280/large"}, {"rank": 9, "name": "N's Zoroark ex", "number": "286/217", "value": 177.11, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-286/large"}, {"rank": 10, "name": "Mega Feraligatr ex", "number": "274/217", "value": 173.78, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me2pt5-274/large"}], "box_image": "https://storage.googleapis.com/images.pricecharting.com/3bzbjxje4gybk37w/240.jpg", "msrp": 49.99, "reg_mark": "I", "print_status": "in_print", "oop_date": null, "rotation_date": null, "set_name_display": "Ascended Heroes", "short_name": "Ascended Heroes ETB", "ticker": "AH.ETB", "cagr_pct": 3065.1, "total_appreciation_pct": 216.3, "months_since_release": 4, "pull_rates_by_tier": {"mega_hyper_rare": {"any": "1/540", "specific": "1/1,080"}, "special_illustration_rare": {"any": "1/70", "specific": "1/1,533"}, "illustration_rare": {"any": "1/9", "specific": "1/293"}, "mega_attack_rare": {"any": "1/29", "specific": "1/202"}, "ultra_rare": {"any": "1/21", "specific": "1/291"}, "double_rare": {"any": "1/5", "specific": "1/191"}}}, "surging_sparks_bb": {"id": "surging_sparks_bb", "name": "Surging Sparks Booster Box", "type": "sealed_bb", "set_name": "Scarlet & Violet\u2014Surging Sparks", "set_id": "sv8", "release_date": "2024-11-08", "rotation_status": "standard", "market_price": 251.31, "psa10_price": null, "price_history": [198.0, 215.0, 230.0, 244.97, 239.88, 234.92, 235.0, 236.76, 249.99, 252.15, 300.0, 251.5, 222.82, 226.83, 250.0, 255.0, 253.85, 253.27, 251.31], "price_first_idx": 0, "earliest_chart_month": "2024-11", "trends_history": [65, 43, 28, 24, 25, 16, 11, 9, 9, 17, 12, 15, 13, 13, 10, 10, 14, 21, 15], "trends_12m_avg": 13.2, "youtube_views_12m": 28951205, "ebay_active": 263, "ebay_active_median": 272.0, "ebay_sold_90d": 240, "ebay_sold_90d_median": 251.4, "ev_per_box": 29.52, "ev_ratio": 0.117, "top_chase_name": "Pikachu ex", "top_chase_value": 334.82, "chase_cards": [{"rank": 1, "name": "Pikachu ex", "number": "238/191", "value": 338.36, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv8/238_hires.png"}, {"rank": 2, "name": "Latias ex", "number": "239/191", "value": 181.57, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv8/239_hires.png"}, {"rank": 3, "name": "Milotic", "number": "237/191", "value": 132.61, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv8/237_hires.png"}, {"rank": 4, "name": "Pikachu ex", "number": "247/191", "value": 89.41, "tier": "hyper_rare", "image": "https://images.pokemontcg.io/sv8/247_hires.png"}, {"rank": 5, "name": "Hydreigon ex", "number": "240/191", "value": 41.66, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv8/240_hires.png"}, {"rank": 6, "name": "Latios", "number": "203/191", "value": 35.73, "tier": "illustration_rare", "image": "https://images.pokemontcg.io/sv8/203_hires.png"}, {"rank": 7, "name": "Lisia's Appeal", "number": "246/191", "value": 33.69, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv8/246_hires.png"}, {"rank": 8, "name": "Alolan Exeggutor ex", "number": "242/191", "value": 31.89, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv8/242_hires.png"}, {"rank": 9, "name": "Pikachu ex", "number": "219/191", "value": 30.64, "tier": "ultra_rare", "image": "https://images.pokemontcg.io/sv8/219_hires.png"}, {"rank": 10, "name": "Durant ex", "number": "236/191", "value": 29.72, "tier": "special_illustration_rare", "image": "https://images.pokemontcg.io/sv8/236_hires.png"}], "box_image": "https://storage.googleapis.com/images.pricecharting.com/z376uvyql62aorb5/240.jpg", "msrp": 161.99, "reg_mark": "I", "print_status": "in_print", "oop_date": null, "rotation_date": null, "set_name_display": "Surging Sparks", "short_name": "Surging Sparks BB", "ticker": "SS.BB", "cagr_pct": 34.0, "total_appreciation_pct": 55.1, "months_since_release": 18, "pull_rates_by_tier": {"hyper_rare": {"any": "1/188", "specific": "1/1,127"}, "special_illustration_rare": {"any": "1/87", "specific": "1/960"}, "illustration_rare": {"any": "1/13", "specific": "1/300"}, "ultra_rare": {"any": "1/15", "specific": "1/312"}}}, "perfect_order_etb": {"id": "perfect_order_etb", "name": "Perfect Order Elite Trainer Box (Mega Zygarde)", "type": "sealed_etb", "set_name": "Mega Evolution\u2014Perfect Order", "set_id": "me3", "release_date": "2026-03-27", "rotation_status": "standard", "market_price": 70.0, "psa10_price": null, "price_history": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 77.0, 68.27, 70.0], "price_first_idx": 16, "earliest_chart_month": "2026-03", "trends_history": [4, 3, 3, 3, 3, 4, 3, 2, 3, 3, 5, 5, 4, 4, 16, 11, 74, 100, 65], "trends_12m_avg": 24.3, "youtube_views_12m": 3999059, "ebay_active": 806, "ebay_active_median": 78.99, "ebay_sold_90d": 139, "ebay_sold_90d_median": 67.74, "ev_per_box": 15.01, "ev_ratio": 0.214, "top_chase_name": "Meowth ex", "top_chase_value": 185.26, "chase_cards": [{"rank": 1, "name": "Meowth ex", "number": "121/088", "value": 199.89, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me3-121/large"}, {"rank": 2, "name": "Mega Zygarde ex", "number": "124/088", "value": 168.58, "tier": "mega_hyper_rare", "image": "https://images.scrydex.com/pokemon/me3-124/large"}, {"rank": 3, "name": "Mega Zygarde ex", "number": "120/088", "value": 86.75, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me3-120/large"}, {"rank": 4, "name": "Mega Clefable ex", "number": "119/088", "value": 79.99, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me3-119/large"}, {"rank": 5, "name": "Rosa's Encouragement", "number": "123/088", "value": 76.11, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me3-123/large"}, {"rank": 6, "name": "Mega Starmie ex", "number": "118/088", "value": 69.84, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me3-118/large"}, {"rank": 7, "name": "Jacinthe", "number": "122/088", "value": 35.68, "tier": "special_illustration_rare", "image": "https://images.scrydex.com/pokemon/me3-122/large"}, {"rank": 8, "name": "Clefairy", "number": "094/088", "value": 31.03, "tier": "illustration_rare", "image": "https://images.scrydex.com/pokemon/me3-94/large"}, {"rank": 9, "name": "Meowth ex", "number": "107/088", "value": 19.26, "tier": "ultra_rare", "image": "https://images.scrydex.com/pokemon/me3-107/large"}, {"rank": 10, "name": "Poke Pad", "number": "113/088", "value": 16.4, "tier": "ultra_rare", "image": "https://images.scrydex.com/pokemon/me3-113/large"}], "box_image": "https://storage.googleapis.com/images.pricecharting.com/bphquy73o2t6q7ye/240.jpg", "msrp": 49.99, "reg_mark": "J", "print_status": "in_print", "oop_date": null, "rotation_date": null, "set_name_display": "Mega Evolution\u2014Perfect Order", "short_name": "Perfect Order ETB", "ticker": "PO.ETB", "cagr_pct": 653.9, "total_appreciation_pct": 40.0, "months_since_release": 2, "pull_rates_by_tier": {"mega_hyper_rare": {"any": "1/1,786", "specific": "1/1,786"}, "special_illustration_rare": {"any": "1/81", "specific": "1/487"}, "illustration_rare": {"any": "1/9", "specific": "1/98"}, "ultra_rare": {"any": "1/12", "specific": "1/211"}, "double_rare": {"any": "1/5", "specific": "1/43"}}}, "bubble_mew": {"id": "bubble_mew", "name": "Mew ex SIR #232/091 (Paldean Fates) \u2014 raw", "type": "raw_single", "set_name": "Scarlet & Violet\u2014Paldean Fates", "set_id": "sv4pt5", "release_date": "2024-01-26", "rotation_status": "rotated", "market_price": 808.75, "psa10_price": 2725.0, "price_history": [210.0, 285.0, 308.42, 400.0, 332.62, 303.43, 305.0, 310.0, 350.0, 555.09, 625.0, 635.0, 516.38, 469.5, 520.53, 500.0, 630.07, 780.15, 808.75], "price_first_idx": 0, "earliest_chart_month": "2024-11", "trends_history": [10, 9, 10, 11, 10, 11, 9, 6, 7, 8, 8, 8, 6, 10, 7, 6, 7, 10, 8], "trends_12m_avg": 7.6, "youtube_views_12m": 27989462, "ebay_active": 16, "ebay_active_median": 1077.5, "ebay_sold_90d": 161, "ebay_sold_90d_median": 641.32, "chase_cards": [], "box_image": "https://storage.googleapis.com/images.pricecharting.com/741c562c629f44c6f16cec378fae53d9e2246cddd9bed7e96a814e84d1294aa7/240.jpg", "msrp": null, "reg_mark": "G", "print_status": "out_of_print", "oop_date": "Spring 2026", "rotation_date": "2026-04-10", "set_name_display": "Paldean Fates", "short_name": "Bubble Mew", "ticker": "PAF.MEW.232", "grading_economics": {"raw_cost": 808.75, "grading_fee_all_in": 189, "break_even": 997, "expected_return": 78, "expected_graded_value": 1075, "grades": [{"rank": 1, "grade": "PSA 10", "tier_label": "Gem Mint", "value": 2725.0, "probability": 0.3, "net_pl": 1728, "description": "The headline upside outcome. Requires perfect centering, corners, edges, and surface \u2014 modern SIRs achieve this approximately 30% of the time per PSA grading data."}, {"rank": 2, "grade": "PSA 9", "tier_label": "Mint", "value": 375.0, "probability": 0.5, "net_pl": -622, "description": "The most common outcome by frequency. Trades around half the raw card price \u2014 this outcome loses approximately $622 against the $997 all-in cost basis."}, {"rank": 3, "grade": "PSA 8", "tier_label": "Near Mint-Mint", "value": 200.0, "probability": 0.15, "net_pl": -797, "description": "Light play wear visible to inspection. This outcome loses ~$797 against the all-in cost basis."}, {"rank": 4, "grade": "Raw", "tier_label": "Ungraded return", "value": 808.75, "probability": 0.05, "net_pl": -188, "description": "Below-PSA-8 outcomes typically aren't encapsulated. Submitter ends up roughly back to the raw price minus the $189 grading fee."}]}, "cagr_pct": 134.3, "total_appreciation_pct": 285.1}}, "chart_labels": ["Nov 24", "Dec 24", "Jan 25", "Feb 25", "Mar 25", "Apr 25", "May 25", "Jun 25", "Jul 25", "Aug 25", "Sep 25", "Oct 25", "Nov 25", "Dec 25", "Jan 26", "Feb 26", "Mar 26", "Apr 26", "May 26"]};
+
+// PARSE URL PARAM
+const urlParams = new URLSearchParams(window.location.search);
+const ACTIVE_PRODUCT_ID = urlParams.get('product') || 'sv151_etb';
+const product = DATA.products[ACTIVE_PRODUCT_ID];
+if (!product) {
+  document.body.innerHTML = '<div style="padding:64px;font-family:monospace;color:#ef4444;">Invalid product ID: ' + ACTIVE_PRODUCT_ID + '</div>';
+  throw new Error('Invalid product');
+}
+
+// Robust product-type detection. A product takes the "single card / grading economics" path
+// iff it has a grading_economics block. Otherwise it's a sealed product (ETB or booster box).
+// We use the data structure as the source of truth rather than a magic type-string match.
+const IS_SINGLE_CARD = !!product.grading_economics;
+const IS_SEALED = !IS_SINGLE_CARD;
+const IS_ETB = product.type === 'sealed_etb';
+const IS_BB = product.type === 'sealed_bb';
+
+const CHART_LABELS_FULL = DATA.chart_labels;
+const TIER_LABEL_MAP = {
+  special_illustration_rare: { short: 'SIR', label: 'SIR · Special Illustration Rare', cls: '' },
+  mega_hyper_rare:           { short: 'MHR', label: 'MHR · Mega Hyper Rare', cls: 'tier-mhr' },
+  hyper_rare:                { short: 'HR',  label: 'HR · Hyper Rare', cls: 'tier-hr' },
+  illustration_rare:         { short: 'IR',  label: 'IR · Illustration Rare', cls: 'tier-ir' },
+  ultra_rare:                { short: 'UR',  label: 'UR · Ultra Rare', cls: 'tier-ur' },
+  mega_attack_rare:          { short: 'MAR', label: 'MAR · Mega Attack Rare', cls: 'tier-hr' },
+  double_rare:               { short: '2R',  label: '2R · Double Rare', cls: 'tier-ur' },
+};
+
+const COMPARE_COLORS = {
+  sv151_etb:           'rgba(168, 162, 158, 0.7)',
+  surging_sparks_bb:   'rgba(168, 162, 158, 0.7)',
+  ascended_heroes_etb: 'rgba(148, 163, 184, 0.7)',
+  perfect_order_etb:   'rgba(212, 184, 154, 0.7)',
+  bubble_mew:          'rgba(156, 163, 175, 0.7)',
+};
+
+function fmtUsd(v) { return '$' + v.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: v < 100 ? 2 : 0 }); }
+function fmtUsdShort(v) { return '$' + Math.round(v).toLocaleString(); }
+function fmtMillions(v) { return (v / 1_000_000).toFixed(2) + 'M'; }
+function fmtPct(v) { return (v > 0 ? '▲ ' : '▼ ') + Math.abs(v).toFixed(1) + '%'; }
+
+// ============================================================
+// HEADER & METADATA
+// ============================================================
+document.getElementById('pageTitle').textContent = product.short_name + ' — Investment Dashboard';
+document.getElementById('topbarTicker').textContent = product.ticker;
+document.getElementById('topbarReleased').textContent = product.release_date;
+document.getElementById('brandSubname').textContent = IS_SINGLE_CARD ? 'Single Card Analytics' : 'Sealed Product Analytics';
+
+document.getElementById('productImage').src = product.box_image;
+document.getElementById('productImage').alt = product.short_name;
+document.getElementById('productImageWrap').dataset.zoomable = 'true';
+document.getElementById('productImageWrap').dataset.zoomSrc = product.box_image;
+document.getElementById('productImage').onerror = function() {
+  this.style.display = 'none';
+  this.nextElementSibling.style.display = 'flex';
+  this.parentElement.removeAttribute('data-zoomable');
+};
+
+document.getElementById('productName').textContent = product.name;
+document.getElementById('metaSet').textContent = product.set_name_display;
+document.getElementById('metaType').textContent = IS_ETB ? 'Elite Trainer Box · 9 packs' : IS_BB ? 'Booster Box · 36 packs' : 'Special Illustration Rare · Single Card';
+document.getElementById('metaRegMark').textContent = product.reg_mark;
+
+const badgesEl = document.getElementById('badges');
+if (product.print_status === 'out_of_print') {
+  badgesEl.innerHTML += '<span class="badge oop">Out of print</span>';
+} else {
+  badgesEl.innerHTML += '<span class="badge in-print">In print</span>';
+}
+if (product.rotation_status === 'rotated') {
+  badgesEl.innerHTML += '<span class="badge rotated">Rotated · Standard</span>';
+} else {
+  badgesEl.innerHTML += '<span class="badge legal">Standard legal</span>';
+}
+if (IS_SINGLE_CARD) {
+  badgesEl.innerHTML += '<span class="badge sealed" style="color: var(--text-dim); border-color: rgba(96,165,250,0.4); background: rgba(96,165,250,0.08);">Single Card · Raw</span>';
+} else {
+  badgesEl.innerHTML += '<span class="badge sealed">Sealed Product</span>';
+}
+
+document.getElementById('priceLabel').textContent = IS_SINGLE_CARD ? 'Current Raw Price' : 'Current Market Price';
+document.getElementById('priceValue').textContent = fmtUsd(product.market_price);
+
+// CAGR vs total-return display: switch convention for products under 12 months
+const cagrPillEl = document.getElementById('cagrPill');
+const cagrSubLabelEl = document.getElementById('cagrSubLabel');
+const cagrInfoEl = document.getElementById('cagrInfo');
+const monthsSinceRelease = product.months_since_release || 0;
+if (monthsSinceRelease < 12 && product.total_appreciation_pct !== undefined) {
+  // young product: show total return since launch instead of CAGR
+  cagrPillEl.textContent = '▲ ' + product.total_appreciation_pct.toFixed(1) + '%';
+  cagrSubLabelEl.textContent = 'Total return · ' + monthsSinceRelease + 'mo';
+  cagrInfoEl.dataset.tipTitle = 'Total return since launch';
+  cagrInfoEl.dataset.tip = 'This product launched ' + monthsSinceRelease + ' months ago — too short a window to meaningfully annualize, so the figure shown is the total return from launch MSRP to current market price.';
+} else {
+  cagrPillEl.textContent = '▲ ' + (product.cagr_pct || 0).toFixed(1) + '%';
+  cagrSubLabelEl.textContent = 'CAGR · ' + monthsSinceRelease + 'mo';
+  cagrInfoEl.dataset.tipTitle = 'Annualized price change';
+  const msrpText = product.msrp ? '$' + product.msrp + ' MSRP' : 'first observed price';
+  cagrInfoEl.dataset.tip = 'The compound annual growth rate calculated since this product\'s release at ' + msrpText + '. Smooths out month-to-month noise to give a single \'per year\' rate of return.';
+}
+
+// ============================================================
+// TABS
+// ============================================================
+const TABS_SEALED = [
+  { id: 'price',    label: 'Price', num: '01' },
+  { id: 'demand',   label: 'Demand', num: '02' },
+  { id: 'cultural', label: 'Cultural', num: '03' },
+  { id: 'supply',   label: 'Supply', num: '04' },
+  { id: 'value',    label: 'Value', num: '05' },
+];
+const TABS_CARD = [
+  { id: 'price',    label: 'Price', num: '01' },
+  { id: 'demand',   label: 'Demand', num: '02' },
+  { id: 'cultural', label: 'Cultural', num: '03' },
+  { id: 'supply',   label: 'Supply', num: '04' },
+  { id: 'value',    label: 'Grading', num: '05' },
+];
+const TABS = IS_SINGLE_CARD ? TABS_CARD : TABS_SEALED;
+const tabsNav = document.getElementById('tabsNav');
+TABS.forEach((t, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (i === 0 ? ' active' : '');
+  btn.dataset.target = 'section-' + t.id;
+  btn.innerHTML = '<span class="tab-num">' + t.num + '</span><span>' + t.label + '</span>';
+  btn.addEventListener('click', () => {
+    document.getElementById('section-' + t.id).scrollIntoView({ behavior: 'smooth' });
+  });
+  tabsNav.appendChild(btn);
+});
+
+// ============================================================
+// COMPARISON HELPERS — given a metric, returns sorted rows for compare bars
+// ============================================================
+function getComparisonRows(metricFn, ascending = false) {
+  // metricFn: (product) => number
+  // ascending: true means smaller is "better"/leading
+  const rows = Object.values(DATA.products).map(p => ({
+    id: p.id,
+    name: p.short_name,
+    value: metricFn(p),
+  })).filter(r => r.value !== undefined && r.value !== null);
+  rows.sort((a, b) => ascending ? a.value - b.value : b.value - a.value);
+  const maxVal = Math.max(...rows.map(r => r.value));
+  const minVal = Math.min(...rows.map(r => r.value));
+  return rows.map(r => ({
+    ...r,
+    pct: ascending
+      ? (minVal === maxVal ? 100 : (minVal / r.value) * 100)  // inverse: smallest gets 100%
+      : (maxVal === 0 ? 0 : (r.value / maxVal) * 100),
+    isCurrent: r.id === ACTIVE_PRODUCT_ID,
+  }));
+}
+
+function renderCompareRows(rows, valueFormatter) {
+  return rows.map(r => 
+    '<div class="comp-row' + (r.isCurrent ? ' current' : '') + '">' +
+    '<span class="comp-name">' + r.name + '</span>' +
+    '<div class="comp-bar"><div class="comp-bar-fill" style="width:' + r.pct.toFixed(1) + '%"></div></div>' +
+    '<span class="comp-val">' + valueFormatter(r.value) + '</span>' +
+    '</div>'
+  ).join('');
+}
+</script>
+
+<script>
+// ============================================================
+// SECTIONS RENDERING — broken into separate script blocks for clarity
+// ============================================================
+const sectionsContainer = document.getElementById('sectionsContainer');
+// alias for downstream code below that reads `isSealed`
+const isSealed = IS_SEALED;
+
+// ============================================================
+// SECTION 01: PRICE & FINANCIAL PERFORMANCE
+// ============================================================
+const cagrLabel = monthsSinceRelease < 12 ? 'Total return' : 'CAGR';
+const priceSection = document.createElement('section');
+priceSection.id = 'section-price';
+priceSection.className = 'section';
+priceSection.innerHTML = `
+  <div class="section-head">
+    <div class="section-title" data-num="01">Price &amp; Financial Performance</div>
+    <div class="section-sub">${monthsSinceRelease}-month price history</div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Price Trajectory
+        <span class="info" data-tip-title="Price chart" data-tip="Monthly closing price since release. The shaded area highlights the cumulative price appreciation over time.">i</span>
+      </div>
+      <div class="compare-chips">
+        <span class="compare-chips-label">compare:</span>
+        ${Object.values(DATA.products).filter(p => p.id !== ACTIVE_PRODUCT_ID).map(p => 
+          '<button class="chip" data-chart="price" data-cmp="' + p.id + '">' + p.short_name + '</button>'
+        ).join('')}
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+    </div>
+  </div>
+`;
+sectionsContainer.appendChild(priceSection);
+</script>
+
+<script>
+// ============================================================
+// SECTION 02: DEMAND & LIQUIDITY
+// ============================================================
+const demandSection = document.createElement('section');
+demandSection.id = 'section-demand';
+demandSection.className = 'section';
+const salesRows = getComparisonRows(p => p.ebay_sold_90d);
+const medianRows = getComparisonRows(p => p.ebay_sold_90d_median);
+const activeRows = getComparisonRows(p => p.ebay_active, true);
+const askingRows = getComparisonRows(p => p.ebay_active_median);
+
+demandSection.innerHTML = `
+  <div class="section-head">
+    <div class="section-title" data-num="02">Demand &amp; Liquidity</div>
+    <div class="section-sub">eBay sales velocity and active listings</div>
+  </div>
+  <div class="grid-3">
+    <div class="stat-card">
+      <div class="stat-label">Sales (last 90 days)
+        <span class="info" data-tip-title="eBay sold count" data-tip="Number of completed eBay sales over the past 90 days, scraped from sold listings.">i</span>
+      </div>
+      <div class="stat-value">${product.ebay_sold_90d}</div>
+      <div class="stat-detail">≈ ${(product.ebay_sold_90d / 90).toFixed(1)} sales/day</div>
+      <div class="comp">
+        <div class="comp-label">vs. other products</div>
+        ${renderCompareRows(salesRows, v => v.toLocaleString())}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Median sale price (last 90 days)
+        <span class="info" data-tip-title="Median sold price" data-tip="Weighted median of all eBay sold prices over the past 90 days. Less sensitive to outliers than mean.">i</span>
+      </div>
+      <div class="stat-value">${fmtUsd(product.ebay_sold_90d_median)}</div>
+      <div class="stat-detail">From completed sales</div>
+      <div class="comp">
+        <div class="comp-label">vs. other products</div>
+        ${renderCompareRows(medianRows, v => fmtUsd(v))}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active listings
+        <span class="info" data-tip-title="Active inventory" data-tip="Number of items currently listed for sale on eBay. Fewer active listings means tighter supply.">i</span>
+      </div>
+      <div class="stat-value">${product.ebay_active}</div>
+      <div class="stat-detail">Median ask: ${fmtUsd(product.ebay_active_median)}</div>
+      <div class="comp">
+        <div class="comp-label">vs. other products · fewer = tighter</div>
+        ${renderCompareRows(activeRows, v => v.toLocaleString())}
+      </div>
+    </div>
+  </div>
+`;
+sectionsContainer.appendChild(demandSection);
+</script>
+
+<script>
+// ============================================================
+// SECTION 03: CULTURAL & COMMUNITY PULL
+// ============================================================
+const culturalSection = document.createElement('section');
+culturalSection.id = 'section-cultural';
+culturalSection.className = 'section';
+const ytRows = getComparisonRows(p => p.youtube_views_12m);
+const trendsRows = getComparisonRows(p => p.trends_12m_avg);
+
+culturalSection.innerHTML = `
+  <div class="section-head">
+    <div class="section-title" data-num="03">Cultural &amp; Community Pull</div>
+    <div class="section-sub">YouTube and Google Trends signals</div>
+  </div>
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">YouTube Attention
+          <span class="info" data-tip-title="YouTube views" data-tip="Total views on Pokémon TCG content mentioning this product over the past 12 months, via the YouTube Data API.">i</span>
+        </div>
+        <div class="panel-meta">12-month total</div>
+      </div>
+      <div class="panel-body">
+        <div class="stat-value lg">${fmtMillions(product.youtube_views_12m)}</div>
+        <div class="stat-detail">total views, last 12 months</div>
+        <div class="comp">
+          <div class="comp-label">vs. other products</div>
+          ${renderCompareRows(ytRows, v => fmtMillions(v))}
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Search Interest
+          <span class="info" data-tip-title="Google Trends" data-tip="Monthly Google search interest for set-related terms, scaled 0–100 within the comparison window.">i</span>
+        </div>
+        <div class="compare-chips">
+          <span class="compare-chips-label">compare:</span>
+          ${Object.values(DATA.products).filter(p => p.id !== ACTIVE_PRODUCT_ID).map(p => 
+            '<button class="chip" data-chart="trends" data-cmp="' + p.id + '">' + p.short_name + '</button>'
+          ).join('')}
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap"><canvas id="trendsChart"></canvas></div>
+        <div style="margin-top: var(--s-3);">
+          <div class="stat-value sm">${product.trends_12m_avg} / 100</div>
+          <div class="stat-detail">12-month average</div>
+          <div class="comp">
+            <div class="comp-label">12-mo avg vs. other products</div>
+            ${renderCompareRows(trendsRows, v => v.toString())}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+sectionsContainer.appendChild(culturalSection);
+</script>
+
+<script>
+// ============================================================
+// SECTION 04: SUPPLY & SCARCITY
+// ============================================================
+const supplySection = document.createElement('section');
+supplySection.id = 'section-supply';
+supplySection.className = 'section';
+const printStatusText = product.print_status === 'out_of_print' ? 'Out of print' : 'In print';
+const rotationText = product.rotation_status === 'rotated' ? 'Rotated' : 'Standard legal';
+
+supplySection.innerHTML = `
+  <div class="section-head">
+    <div class="section-title" data-num="04">Supply &amp; Scarcity</div>
+    <div class="section-sub">Print status, format legality, and set age</div>
+  </div>
+  <div class="grid-3">
+    <div class="stat-card">
+      <div class="stat-label">Print status
+        <span class="info" data-tip-title="Print status" data-tip="${product.print_status === 'out_of_print' ? 'As of Spring 2026, Pokémon has stopped printing all G-mark sets. Existing supply is the long-term pool.' : 'Currently in print — new product is still being produced and distributed.'}">i</span>
+      </div>
+      <div class="stat-value sm" style="color: ${product.print_status === 'out_of_print' ? 'var(--danger)' : 'var(--success)'};">${printStatusText}</div>
+      <div class="stat-detail">${product.print_status === 'out_of_print' ? 'Cohort halt: ' + (product.oop_date || 'Spring 2026') : 'Active production'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Standard format
+        <span class="info" data-tip-title="Tournament rotation" data-tip="Pokémon's competitive Standard format rotates older sets out roughly every two years. Rotated sets see player demand decline as the set is no longer tournament-legal.">i</span>
+      </div>
+      <div class="stat-value sm" style="color: ${product.rotation_status === 'rotated' ? 'var(--warning)' : 'var(--text-dim)'};">${rotationText}</div>
+      <div class="stat-detail">${product.rotation_status === 'rotated' ? 'Rotated April 10, 2026' : 'Currently legal'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Regulation mark &amp; set age
+        <span class="info" data-tip-title="Regulation mark" data-tip="Pokémon assigns a letter to each new wave of sets. Sets within the same letter cohort tend to rotate together.">i</span>
+      </div>
+      <div class="stat-value sm">${product.reg_mark} · ${monthsSinceRelease} mo</div>
+      <div class="stat-detail">Released ${product.release_date}</div>
+    </div>
+  </div>
+`;
+sectionsContainer.appendChild(supplySection);
+</script>
+
+<script>
+// ============================================================
+// SECTION 05: VALUE — branches sealed vs single card
+// ============================================================
+const valueSection = document.createElement('section');
+valueSection.id = 'section-value';
+valueSection.className = 'section';
+
+if (isSealed) {
+  // EV-based section for sealed products
+  const evRatioRows = Object.values(DATA.products).filter(p => !p.grading_economics && p.ev_ratio).map(p => ({
+    id: p.id, name: p.short_name, value: p.ev_ratio, isCurrent: p.id === ACTIVE_PRODUCT_ID,
+  })).sort((a, b) => a.value - b.value);
+  const evMax = Math.max(...evRatioRows.map(r => r.value));
+  evRatioRows.forEach(r => r.pct = (r.value / evMax) * 100);
+
+  valueSection.innerHTML = `
+    <div class="section-head">
+      <div class="section-title" data-num="05">Value &amp; Pack Economics</div>
+      <div class="section-sub">Expected pull value vs. market price</div>
+    </div>
+    <div class="value-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">EV / Price Ratio
+            <span class="info" data-tip-title="Expected value ratio" data-tip="The average dollar value of cards inside a sealed pack, divided by the price you pay. Lower ratios mean the sealed product trades at a collector premium over what you'd expect to pull.">i</span>
+          </div>
+          <div class="panel-meta">Lower = stronger premium</div>
+        </div>
+        <div class="panel-body">
+          <div class="ratio-display">
+            <div class="ratio-num">${product.ev_ratio.toFixed(3)}</div>
+            <div class="ratio-label">EV / PRICE · PER BOX</div>
+          </div>
+          <div class="comp" style="border:none; padding-top:0; margin-top:0;">
+            <div class="comp-label">vs. all sealed products (lower = stronger premium)</div>
+            ${evRatioRows.map(r => 
+              '<div class="comp-row' + (r.isCurrent ? ' current' : '') + '">' +
+              '<span class="comp-name">' + r.name + '</span>' +
+              '<div class="comp-bar"><div class="comp-bar-fill" style="width:' + r.pct.toFixed(1) + '%"></div></div>' +
+              '<span class="comp-val">' + r.value.toFixed(3) + '</span>' +
+              '</div>'
+            ).join('')}
+          </div>
+          <div class="ratio-context">
+            Expected pull value: <strong>${fmtUsd(product.ev_per_box)}</strong> per box · Market price: <strong>${fmtUsd(product.market_price)}</strong>.
+            Top chase card is <strong>${product.top_chase_name}</strong> at <strong>${fmtUsd(product.top_chase_value)}</strong>.
+          </div>
+          <div class="distribution-block">
+            <div class="distribution-header">
+              <div class="distribution-title">Pull Pool Distribution
+                <span class="info" data-tip-title="Top 10 value distribution" data-tip="Each bar represents one of the top 10 chase cards by market value. Click any bar to flip the carousel to that card.">i</span>
+              </div>
+              <div class="distribution-meta">Top 10 chase values · click bar to view</div>
+            </div>
+            <div class="distribution-chart-wrap"><canvas id="distributionChart"></canvas></div>
+          </div>
+          <div class="distribution-block">
+            <div class="distribution-header">
+              <div class="distribution-title">Cumulative Value
+                <span class="info" data-tip-title="Cumulative concentration" data-tip="What percentage of the top-10's total value is captured by the cards ranked through this point.">i</span>
+              </div>
+              <div class="distribution-meta">% of top-10 value through rank N</div>
+            </div>
+            <div class="distribution-chart-wrap"><canvas id="cumulativeChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="chase-panel">
+        <div class="panel-header">
+          <div class="panel-title">Top Chase Cards
+            <span class="info" data-tip-title="Top chase cards" data-tip="The 10 most valuable cards in this set's pull pool, ranked by current market price.">i</span>
+          </div>
+          <div class="panel-meta">Top 10 · ranked by market value</div>
+        </div>
+        <div class="carousel-wrap">
+          <div class="carousel-nav">
+            <span class="carousel-pos">Card <strong id="carousel-current">1</strong> of <strong id="carousel-total">${product.chase_cards.length}</strong></span>
+            <div class="carousel-btns">
+              <button class="carousel-btn" id="carousel-prev" aria-label="Previous">‹</button>
+              <button class="carousel-btn" id="carousel-next" aria-label="Next">›</button>
+            </div>
+          </div>
+          <div class="chase-card" id="chase-card-display"></div>
+          <div class="carousel-dots" id="carousel-dots"></div>
+        </div>
+      </div>
+    </div>
+  `;
+} else {
+  // Grading economics for single card (Bubble Mew)
+  const g = product.grading_economics;
+  valueSection.innerHTML = `
+    <div class="section-head">
+      <div class="section-title" data-num="05">Value &amp; Grading Economics</div>
+      <div class="section-sub">Expected return under grade-outcome uncertainty</div>
+    </div>
+    <div class="value-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Expected Grading Return
+            <span class="info" data-tip-title="Expected grading return" data-tip="The probability-weighted expected value of submitting this raw card to PSA, minus the raw card cost and grading fees.">i</span>
+          </div>
+          <div class="panel-meta">After grading fees · vs. raw cost basis</div>
+        </div>
+        <div class="panel-body">
+          <div class="ratio-display">
+            <div class="ratio-num">+$${g.expected_return}</div>
+            <div class="ratio-label">EXPECTED RETURN · PER SUBMISSION</div>
+          </div>
+          <div class="comp" style="border:none; padding-top:0; margin-top:0;">
+            <div class="comp-label">Breakdown vs. cost basis</div>
+            <div class="comp-row"><span class="comp-name">Raw card cost</span><div class="comp-bar"><div class="comp-bar-fill" style="width:75%; background: var(--text-mute);"></div></div><span class="comp-val">${fmtUsd(g.raw_cost)}</span></div>
+            <div class="comp-row"><span class="comp-name">PSA Express + ship</span><div class="comp-bar"><div class="comp-bar-fill" style="width:17.6%; background: var(--text-mute);"></div></div><span class="comp-val">${fmtUsd(g.grading_fee_all_in)}</span></div>
+            <div class="comp-row current"><span class="comp-name">Expected graded value</span><div class="comp-bar"><div class="comp-bar-fill" style="width:100%"></div></div><span class="comp-val">${fmtUsd(g.expected_graded_value)}</span></div>
+            <div class="comp-row"><span class="comp-name">PSA 10 upside scenario</span><div class="comp-bar"><div class="comp-bar-fill" style="width:100%; background: rgba(16,185,129,0.5);"></div></div><span class="comp-val">${fmtUsd(2725)}</span></div>
+          </div>
+          <div class="ratio-context">
+            Because the expected PSA 10 value exceeds $1,500, this card requires PSA's <strong>Express tier ($149 base)</strong>. With the declared-value upcharge and return shipping with insurance, all-in cost is approximately <strong>${fmtUsd(g.grading_fee_all_in)} per submission</strong>. Modern SIRs grade PSA 10 only ~30% of the time. The 50% PSA 9 outcome loses ~$622 against the cost basis.
+          </div>
+          <div class="distribution-block">
+            <div class="distribution-header">
+              <div class="distribution-title">PSA Grade Outcome Probabilities
+                <span class="info" data-tip-title="Grade-yield distribution" data-tip="The probability of each PSA grade outcome for a modern SIR card.">i</span>
+              </div>
+              <div class="distribution-meta">Probability × market value per grade</div>
+            </div>
+            <div class="distribution-chart-wrap"><canvas id="distributionChart"></canvas></div>
+          </div>
+          <div class="distribution-block">
+            <div class="distribution-header">
+              <div class="distribution-title">Cumulative Probability of Profit
+                <span class="info" data-tip-title="Profit probability" data-tip="The probability that the grading outcome yields a net profit against the all-in cost. Only PSA 10 outcomes clear this threshold.">i</span>
+              </div>
+              <div class="distribution-meta">Cumulative outcome coverage</div>
+            </div>
+            <div class="distribution-chart-wrap"><canvas id="cumulativeChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="chase-panel">
+        <div class="panel-header">
+          <div class="panel-title">Grade-by-Grade Market Value
+            <span class="info" data-tip-title="Grade ladder" data-tip="Recent market prices at each PSA grade for this card.">i</span>
+          </div>
+          <div class="panel-meta">PSA-graded values · last 90 days</div>
+        </div>
+        <div class="carousel-wrap">
+          <div class="carousel-nav">
+            <span class="carousel-pos">Grade <strong id="carousel-current">PSA 10</strong></span>
+            <div class="carousel-btns">
+              <button class="carousel-btn" id="carousel-prev" aria-label="Previous">‹</button>
+              <button class="carousel-btn" id="carousel-next" aria-label="Next">›</button>
+            </div>
+          </div>
+          <div class="chase-card" id="chase-card-display"></div>
+          <div class="carousel-dots" id="carousel-dots"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+sectionsContainer.appendChild(valueSection);
+</script>
+
+<script>
+// ============================================================
+// CHART INITIALIZATION
+// ============================================================
+Chart.defaults.font.family = 'IBM Plex Sans';
+Chart.defaults.color = '#71717a';
+
+const baseTooltipOpts = {
+  backgroundColor: '#1f1f25', titleColor: '#1e75d4', bodyColor: '#fafafa',
+  borderColor: '#35353f', borderWidth: 1, padding: 10,
+  titleFont: { family: 'IBM Plex Mono', size: 10, weight: '600' },
+  bodyFont: { family: 'IBM Plex Mono', size: 12 },
+  displayColors: false,
+};
+
+// trim leading nulls in the price array so the chart starts at first real data point
+function trimLeading(arr) {
+  const firstIdx = arr.findIndex(v => v !== null);
+  if (firstIdx <= 0) return { data: arr, labels: CHART_LABELS_FULL };
+  return { data: arr.slice(firstIdx), labels: CHART_LABELS_FULL.slice(firstIdx) };
+}
+
+const priceCtx = document.getElementById('priceChart').getContext('2d');
+const priceGrad = priceCtx.createLinearGradient(0, 0, 0, 240);
+priceGrad.addColorStop(0, 'rgba(30, 117, 212, 0.4)');
+priceGrad.addColorStop(1, 'rgba(30, 117, 212, 0)');
+
+const priceData = trimLeading(product.price_history);
+const priceChart = new Chart(priceCtx, {
+  type: 'line',
+  data: {
+    labels: priceData.labels,
+    datasets: [{
+      label: product.short_name,
+      data: priceData.data,
+      borderColor: '#1e75d4',
+      backgroundColor: priceGrad,
+      fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 6,
+      pointHoverBackgroundColor: '#1e75d4', pointHoverBorderColor: '#09090b', pointHoverBorderWidth: 3,
+      order: 1,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { display: false }, tooltip: { ...baseTooltipOpts, callbacks: { label: (ctx) => ctx.dataset.label + ': ' + fmtUsd(ctx.parsed.y) } } },
+    scales: {
+      x: { grid: { color: '#27272e', drawTicks: false }, ticks: { color: '#71717a', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 0 }, border: { color: '#35353f' } },
+      y: { grid: { color: '#27272e', drawTicks: false }, ticks: { color: '#71717a', font: { family: 'IBM Plex Mono', size: 10 }, callback: v => '$' + v }, border: { color: '#35353f' } }
+    }
+  }
+});
+
+const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+const trendsGrad = trendsCtx.createLinearGradient(0, 0, 0, 240);
+trendsGrad.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+trendsGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+const trendsData = trimLeading(product.trends_history);
+const trendsChart = new Chart(trendsCtx, {
+  type: 'line',
+  data: {
+    labels: trendsData.labels,
+    datasets: [{
+      label: product.short_name,
+      data: trendsData.data,
+      borderColor: '#10b981',
+      backgroundColor: trendsGrad,
+      fill: true, tension: 0.35, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5,
+      pointHoverBackgroundColor: '#10b981', pointHoverBorderColor: '#09090b', pointHoverBorderWidth: 2,
+      order: 1,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { display: false }, tooltip: { ...baseTooltipOpts, titleColor: '#10b981', callbacks: { label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed.y } } },
+    scales: {
+      x: { grid: { color: '#27272e', drawTicks: false }, ticks: { color: '#71717a', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 0 }, border: { color: '#35353f' } },
+      y: { min: 0, max: 100, grid: { color: '#27272e', drawTicks: false }, ticks: { color: '#71717a', font: { family: 'IBM Plex Mono', size: 10 } }, border: { color: '#35353f' } }
+    }
+  }
+});
+
+// ============================================================
+// COMPARE CHIPS — toggle overlays on price/trends charts
+// ============================================================
+const overlays = { price: {}, trends: {} };
+document.querySelectorAll('.chip').forEach(chip => {
+  const cmpId = chip.dataset.cmp;
+  const chartName = chip.dataset.chart;
+  chip.style.setProperty('--chip-color', COMPARE_COLORS[cmpId]);
+  chip.addEventListener('click', () => {
+    const ch = chartName === 'price' ? priceChart : trendsChart;
+    const sourceField = chartName === 'price' ? 'price_history' : 'trends_history';
+    const formatter = chartName === 'price' ? fmtUsd : (v => v);
+    if (overlays[chartName][cmpId]) {
+      // remove overlay
+      ch.data.datasets = ch.data.datasets.filter(d => d.label !== DATA.products[cmpId].short_name);
+      delete overlays[chartName][cmpId];
+      chip.classList.remove('active');
+    } else {
+      // align lengths: take the same trimmed window as the main chart
+      const trimmed = trimLeading(product[sourceField]);
+      const firstIdx = CHART_LABELS_FULL.indexOf(trimmed.labels[0]);
+      const cmpDataFull = DATA.products[cmpId][sourceField];
+      const cmpData = cmpDataFull.slice(firstIdx);
+      ch.data.datasets.push({
+        label: DATA.products[cmpId].short_name,
+        data: cmpData,
+        borderColor: COMPARE_COLORS[cmpId],
+        backgroundColor: 'transparent',
+        borderWidth: 1.5, fill: false, tension: 0.3, pointRadius: 0,
+        borderDash: [4, 3],
+        order: 2,
+      });
+      overlays[chartName][cmpId] = true;
+      chip.classList.add('active');
+    }
+    ch.update();
+  });
+});
+</script>
+
+<script>
+// ============================================================
+// DISTRIBUTION + CUMULATIVE CHARTS (Section 5)
+// CAROUSEL (chase cards for sealed, grade ladder for single card)
+// ============================================================
+const items = isSealed ? product.chase_cards : product.grading_economics.grades;
+const pullRates = product.pull_rates_by_tier || {};
+
+const distCtx = document.getElementById('distributionChart').getContext('2d');
+const distGrad = distCtx.createLinearGradient(0, 0, 0, 200);
+distGrad.addColorStop(0, 'rgba(30, 117, 212, 0.55)');
+distGrad.addColorStop(1, 'rgba(30, 117, 212, 0.15)');
+
+function barColors(activeIdx) {
+  return items.map((_, i) => i === activeIdx ? '#1e75d4' : distGrad);
+}
+function barBorders(activeIdx) {
+  return items.map((_, i) => i === activeIdx ? '#3b8eef' : 'rgba(30, 117, 212, 0.35)');
+}
+
+const distData = isSealed 
+  ? items.map(c => c.value)
+  : items.map(g => +(g.probability * g.value).toFixed(2));
+
+const distLabels = isSealed
+  ? items.map(c => '#' + c.rank)
+  : items.map(g => g.grade);
+
+const distChart = new Chart(distCtx, {
+  type: 'bar',
+  data: {
+    labels: distLabels,
+    datasets: [{
+      data: distData,
+      backgroundColor: barColors(0),
+      borderColor: barBorders(0),
+      borderWidth: 1, borderRadius: 4,
+      categoryPercentage: 0.85, barPercentage: 0.85,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    onClick: (evt, els) => { if (els.length > 0) goToCard(els[0].index); },
+    onHover: (evt, els) => { evt.native.target.style.cursor = els.length > 0 ? 'pointer' : 'default'; },
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...baseTooltipOpts,
+        callbacks: {
+          title: ctx => isSealed
+            ? '#' + items[ctx[0].dataIndex].rank + ' · ' + items[ctx[0].dataIndex].name
+            : items[ctx[0].dataIndex].grade + ' · ' + (items[ctx[0].dataIndex].probability * 100).toFixed(0) + '% likely',
+          label: ctx => isSealed
+            ? [fmtUsd(items[ctx.dataIndex].value), items[ctx.dataIndex].number]
+            : ['Value: ' + fmtUsd(items[ctx.dataIndex].value), 'EV contribution: ' + fmtUsd(items[ctx.dataIndex].probability * items[ctx.dataIndex].value)],
+        }
+      },
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#71717a', font: { family: 'IBM Plex Mono', size: 9 } }, border: { color: '#35353f' } },
+      y: { grid: { color: '#27272e', drawTicks: false }, ticks: { color: '#71717a', font: { family: 'IBM Plex Mono', size: 9 }, callback: v => '$' + v }, border: { color: '#35353f' } }
+    }
+  }
+});
+
+function updateDistActive(idx) {
+  distChart.data.datasets[0].backgroundColor = barColors(idx);
+  distChart.data.datasets[0].borderColor = barBorders(idx);
+  distChart.update('none');
+}
+
+// Cumulative chart
+const cumCtx = document.getElementById('cumulativeChart').getContext('2d');
+const cumGrad = cumCtx.createLinearGradient(0, 0, 0, 200);
+cumGrad.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+cumGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+let cumData;
+if (isSealed) {
+  const tot = items.reduce((s, c) => s + c.value, 0);
+  let run = 0;
+  cumData = items.map(c => {
+    run += c.value;
+    return +(run / tot * 100).toFixed(1);
+  });
+} else {
+  const breakEven = product.grading_economics.break_even;
+  let cum = 0;
+  cumData = items.map(g => {
+    cum += g.probability;
+    return { pct: +(cum * 100).toFixed(1), profitable: g.value > breakEven };
+  });
+}
+
+const cumChart = new Chart(cumCtx, {
+  type: 'line',
+  data: {
+    labels: distLabels,
+    datasets: [{
+      data: isSealed ? cumData : cumData.map(d => d.pct),
+      borderColor: '#10b981',
+      backgroundColor: cumGrad,
+      fill: true, tension: isSealed ? 0.25 : 0.15, borderWidth: 2.5,
+      pointRadius: isSealed ? 3 : cumData.map(d => d.profitable ? 7 : 4),
+      pointBackgroundColor: isSealed ? '#10b981' : cumData.map(d => d.profitable ? '#10b981' : '#52525b'),
+      pointBorderColor: '#09090b', pointBorderWidth: 2, pointHoverRadius: 9,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    onClick: (evt, els) => { if (els.length > 0) goToCard(els[0].index); },
+    onHover: (evt, els) => { evt.native.target.style.cursor = els.length > 0 ? 'pointer' : 'default'; },
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...baseTooltipOpts, titleColor: '#10b981',
+        callbacks: {
+          title: ctx => 'Through ' + distLabels[ctx[0].dataIndex],
+          label: ctx => isSealed
+            ? ctx.parsed.y + '% of top-10 value captured'
+            : [ctx.parsed.y + '% of outcomes covered', cumData[ctx.dataIndex].profitable ? 'Profitable outcome ✓' : 'Loss outcome ✗'],
+        }
+      },
+    },
+    scales: {
+      x: { grid: { color: '#27272e', drawTicks: false }, ticks: { color: '#71717a', font: { family: 'IBM Plex Mono', size: 9 } }, border: { color: '#35353f' } },
+      y: { min: 0, max: 100, grid: { color: '#27272e', drawTicks: false }, ticks: { color: '#71717a', font: { family: 'IBM Plex Mono', size: 9 }, callback: v => v + '%' }, border: { color: '#35353f' } }
+    }
+  }
+});
+</script>
+
+<script>
+// ============================================================
+// CAROUSEL (sealed: chase cards; single card: grade ladder)
+// ============================================================
+let carouselIdx = 0;
+let isAnimating = false;
+const cardDisplay = document.getElementById('chase-card-display');
+const currentSpan = document.getElementById('carousel-current');
+const totalSpan = document.getElementById('carousel-total');
+const prevBtn = document.getElementById('carousel-prev');
+const nextBtn = document.getElementById('carousel-next');
+const dotsContainer = document.getElementById('carousel-dots');
+
+items.forEach((_, i) => {
+  const dot = document.createElement('span');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dot.addEventListener('click', () => { if (i !== carouselIdx && !isAnimating) goToCard(i); });
+  dotsContainer.appendChild(dot);
+});
+
+function cardInnerHTML(item) {
+  if (isSealed) {
+    const tierInfo = TIER_LABEL_MAP[item.tier] || { label: item.tier, cls: '', short: item.tier };
+    const rate = pullRates[item.tier];
+    const top10avg = (items.reduce((s, c) => s + c.value, 0) / items.length).toFixed(2);
+    const tierTooltipAttrs = rate
+      ? 'data-tip-title="' + tierInfo.label + '" data-tip="Approximate pull rate for this tier: ' + rate.specific + ' specific, ' + rate.any + ' any. Sampled from TCGplayer Infinite pack-opening data."'
+      : '';
+    return `
+      <div class="chase-img" data-zoomable="true" data-zoom-src="${item.image}">
+        <img class="chase-img-actual" src="${item.image}" alt="${item.name}" loading="eager" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; this.closest('[data-zoomable]').removeAttribute('data-zoomable');" />
+        <div class="chase-img-fallback">${item.name}<br>${item.number}</div>
+      </div>
+      <div class="chase-meta-block">
+        <div class="chase-rank">Rank <strong>#${item.rank}</strong> of ${items.length}</div>
+        <div class="chase-name">${item.name}</div>
+        <div class="chase-num">${item.number}</div>
+        <span class="chase-tier ${tierInfo.cls}" ${tierTooltipAttrs}>${tierInfo.label}</span>
+        <div class="chase-value">${fmtUsd(item.value)}</div>
+        <div class="chase-context">Top 10 average: <strong style="color:var(--text-dim)">$${top10avg}</strong></div>
+      </div>
+    `;
+  } else {
+    const plClass = item.net_pl >= 0 ? 'grading-pl-gain' : 'grading-pl-loss';
+    const plSign = item.net_pl >= 0 ? '+' : '−';
+    return `
+      <div class="chase-img" data-zoomable="true" data-zoom-src="${product.box_image}">
+        <img class="chase-img-actual" src="${product.box_image}" alt="${product.short_name} ${item.grade}" loading="eager" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; this.closest('[data-zoomable]').removeAttribute('data-zoomable');" />
+        <div class="chase-img-fallback">${product.short_name}<br>${item.grade}</div>
+      </div>
+      <div class="chase-meta-block">
+        <div class="chase-rank">Grade <strong>${item.grade}</strong> · ${(item.probability * 100).toFixed(0)}% likely</div>
+        <div class="chase-name">${item.tier_label}</div>
+        <span class="chase-tier" style="cursor:default;">${(item.probability * 100).toFixed(0)}% OUTCOME PROBABILITY</span>
+        <div class="chase-value">${fmtUsd(item.value)}</div>
+        <div class="chase-context"><span class="${plClass}">Net P&L: ${plSign}$${Math.abs(item.net_pl)}</span> after $${product.grading_economics.grading_fee_all_in} PSA fee</div>
+        <div class="chase-context" style="margin-top:8px;line-height:1.4;color:var(--text-dim);font-family:var(--font-sans);text-align:left;padding:8px 4px;">${item.description}</div>
+      </div>
+    `;
+  }
+}
+
+function updateUI(newIdx) {
+  if (currentSpan) currentSpan.textContent = isSealed ? (newIdx + 1) : items[newIdx].grade;
+  prevBtn.disabled = newIdx === 0;
+  nextBtn.disabled = newIdx === items.length - 1;
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === newIdx));
+  updateDistActive(newIdx);
+}
+
+cardDisplay.innerHTML = cardInnerHTML(items[0]);
+cardDisplay.classList.add('settled');
+updateUI(0);
+
+window.goToCard = function(newIdx) {
+  if (newIdx === carouselIdx || isAnimating) return;
+  if (newIdx < 0 || newIdx >= items.length) return;
+  isAnimating = true;
+  const goingForward = newIdx > carouselIdx;
+  const outClass = goingForward ? 'slide-out-left' : 'slide-out-right';
+  const inFromClass = goingForward ? 'slide-in-from-right' : 'slide-in-from-left';
+  cardDisplay.classList.remove('settled');
+  cardDisplay.classList.add(outClass);
+  setTimeout(() => {
+    cardDisplay.innerHTML = cardInnerHTML(items[newIdx]);
+    cardDisplay.classList.remove(outClass);
+    cardDisplay.classList.add(inFromClass);
+    void cardDisplay.offsetWidth;
+    cardDisplay.classList.remove(inFromClass);
+    cardDisplay.classList.add('settled');
+    carouselIdx = newIdx;
+    updateUI(newIdx);
+    setTimeout(() => { isAnimating = false; }, 300);
+  }, 180);
+};
+
+prevBtn.addEventListener('click', () => goToCard(carouselIdx - 1));
+nextBtn.addEventListener('click', () => goToCard(carouselIdx + 1));
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') goToCard(carouselIdx - 1);
+  if (e.key === 'ArrowRight') goToCard(carouselIdx + 1);
+});
+</script>
+
+<script>
+// ============================================================
+// TOOLTIPS + LIGHTBOX
+// ============================================================
+let tooltipEl = null;
+function ensureTooltip() {
+  if (!tooltipEl) {
+    tooltipEl = document.createElement('div');
+    tooltipEl.className = 'tooltip-bubble';
+    tooltipEl.innerHTML = '<div class="tooltip-bubble-title"></div><div class="tooltip-bubble-body"></div>';
+    document.body.appendChild(tooltipEl);
+  }
+  return tooltipEl;
+}
+function showTooltip(el) {
+  const t = ensureTooltip();
+  t.querySelector('.tooltip-bubble-title').textContent = el.dataset.tipTitle || '';
+  t.querySelector('.tooltip-bubble-body').textContent = el.dataset.tip || '';
+  t.classList.add('visible');
+  const tRect = t.getBoundingClientRect();
+  const eRect = el.getBoundingClientRect();
+  let top = eRect.top - tRect.height - 8;
+  let left = eRect.left + eRect.width / 2 - tRect.width / 2;
+  if (top < 8) top = eRect.bottom + 8;
+  if (left < 8) left = 8;
+  if (left + tRect.width > window.innerWidth - 8) left = window.innerWidth - tRect.width - 8;
+  t.style.top = top + 'px';
+  t.style.left = left + 'px';
+}
+function hideTooltip() { if (tooltipEl) tooltipEl.classList.remove('visible'); }
+document.addEventListener('mouseenter', (e) => {
+  if (e.target.closest && e.target.dataset && e.target.dataset.tipTitle) showTooltip(e.target);
+}, true);
+document.addEventListener('mouseleave', (e) => {
+  if (e.target.closest && e.target.dataset && e.target.dataset.tipTitle) hideTooltip();
+}, true);
+
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+document.addEventListener('click', e => {
+  const z = e.target.closest('[data-zoomable]');
+  if (z) {
+    lightboxImg.src = z.dataset.zoomSrc;
+    lightbox.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+});
+function closeLightbox() {
+  lightbox.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+// ============================================================
+// TABS — Scroll-position-driven active tab
+// The active section is the lowest section whose top edge has scrolled
+// above a threshold line near the top of the viewport (just below the
+// sticky tab bar). This is how documentation site nav works (e.g. MDN, React docs)
+// and works correctly regardless of section height.
+// ============================================================
+const tabs = Array.from(document.querySelectorAll('.tab'));
+function updateActiveTab() {
+  const allSections = Array.from(document.querySelectorAll('.section'));
+  // threshold line ~120px below viewport top (below sticky tab bar)
+  const threshold = 120;
+  let active = allSections[0];
+  for (const sec of allSections) {
+    const rect = sec.getBoundingClientRect();
+    // if this section's top has crossed above the threshold, it (or a later one) is active
+    if (rect.top <= threshold) {
+      active = sec;
+    } else {
+      break;
+    }
+  }
+  // edge case: at the very bottom of the page, force the last section active
+  if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50) {
+    active = allSections[allSections.length - 1];
+  }
+  if (active) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.target === active.id));
+  }
+}
+window.addEventListener('scroll', updateActiveTab, { passive: true });
+window.addEventListener('resize', updateActiveTab);
+updateActiveTab();
+</script>
+
+
+<script>
+// Telemetry: post events to parent window if running in iframe with telemetry=1
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('telemetry') !== '1') return;
+  if (window.parent === window) return;  // not in iframe
+  function post(event_type, event_target, event_value) {
+    try {
+      window.parent.postMessage({
+        _channel: 'dashboard_event',
+        event_type: event_type,
+        event_target: event_target,
+        event_value: event_value || null,
+      }, '*');
+    } catch (e) { /* ignore */ }
+  }
+  // delegate-listen for common interactions
+  // click events: tabs, expand toggles, range buttons, chips, chase carousel buttons, gallery cards
+  document.addEventListener('click', function(e) {
+    const tab = e.target.closest('.tab');
+    if (tab) { post('tab_click', tab.dataset.target || tab.textContent.trim(), null); return; }
+    const rangeBtn = e.target.closest('.range-btn');
+    if (rangeBtn) { post('range_click', rangeBtn.dataset.range || rangeBtn.textContent.trim(), null); return; }
+    const detail = e.target.closest('.detail-toggle');
+    if (detail) { post('expand_click', detail.dataset.target || '', null); return; }
+    const chip = e.target.closest('.chip');
+    if (chip) { post('compare_chip_click', (chip.dataset.cmp || '') + ':' + (chip.dataset.chart || ''), null); return; }
+    const carBtn = e.target.closest('.carousel-btn');
+    if (carBtn) { post('carousel_click', carBtn.id || 'carousel', null); return; }
+    const gCard = e.target.closest('.gallery-card');
+    if (gCard) { post('gallery_card_click', '', null); return; }
+    const zoom = e.target.closest('[data-zoomable]');
+    if (zoom) { post('image_zoom', zoom.dataset.zoomSrc || '', null); return; }
+  });
+  // tooltip hovers: emit one event per hover with duration
+  const hoverStart = new WeakMap();
+  document.addEventListener('mouseenter', function(e) {
+    if (e.target.dataset && e.target.dataset.tipTitle) {
+      hoverStart.set(e.target, performance.now());
+    }
+  }, true);
+  document.addEventListener('mouseleave', function(e) {
+    if (e.target.dataset && e.target.dataset.tipTitle) {
+      const start = hoverStart.get(e.target);
+      if (start) {
+        const duration = Math.round(performance.now() - start);
+        if (duration > 200) {  // ignore drive-by hovers
+          post('tooltip_hover', e.target.dataset.tipTitle || '', { duration_ms: duration });
+        }
+        hoverStart.delete(e.target);
+      }
+    }
+  }, true);
+  // section visibility: emit when each section becomes visible
+  // (used by both Style A which has sections, and Style B which has sections too)
+  const seenSections = new Set();
+  const sectionObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(en) {
+      if (en.isIntersecting && !seenSections.has(en.target)) {
+        seenSections.add(en.target);
+        const sectionName = en.target.id || en.target.querySelector('.section-title')?.textContent?.trim() || '';
+        post('section_first_view', sectionName, null);
+      }
+    });
+  }, { threshold: 0.25 });
+  // observe after a brief delay so DOM is populated
+  setTimeout(function() {
+    document.querySelectorAll('.section').forEach(function(s) { sectionObs.observe(s); });
+  }, 500);
+  // page loaded event
+  post('dashboard_ready', window.location.search, null);
+})();
+</script>
+
+</body>
+</html>
