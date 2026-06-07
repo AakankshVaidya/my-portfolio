@@ -37,14 +37,43 @@
     <p class="intro-big">"Move your opponent. <span class="gold">Make them run.</span>"</p>
     <p class="intro-body">The idea is simple. Stretch your opponent corner to corner and you control the rally. So I went looking for that winning strategy in <strong>ShuttleSet22</strong>, a dataset of 22,500 stroke-by-stroke records from elite women's singles, where every shot is tagged with court positions and the rally's outcome.</p>
     <p class="intro-body">For each shot I measured one thing. I called it <span class="metric">displacement</span>: how far the opponent had to move to reach it. If "make them run" really wins matches, then displacement should tell us who wins.</p>
-    <p class="intro-cue">Two hypotheses. Let's test them.</p>
+    <p class="intro-cue">But first: what is this data, and what did I actually do?</p>
   </div>
 </section>
 
-<!-- ACT 1: PLAYSTYLE -->
+<!-- DATA -->
+<section class="info" id="sData">
+  <div class="info-in">
+    <p class="info-kicker">The data</p>
+    <h2 class="info-h">Every shot of 58 elite matches, <span class="gold">one row at a time.</span></h2>
+    <p class="info-body">The analysis runs on <strong>ShuttleSet22</strong>, a public dataset that annotates professional badminton singles match by match, stroke by stroke. Three years of elite play (2020 to 2022) come to <strong>52,356 strokes</strong> across <strong>4,944 rallies</strong>, recorded by hand from broadcast footage.</p>
+    <div class="stats">
+      <div class="stat"><span class="stat-n">58</span><span class="stat-l">matches</span></div>
+      <div class="stat"><span class="stat-n">35</span><span class="stat-l">players</span></div>
+      <div class="stat"><span class="stat-n">52,356</span><span class="stat-l">strokes</span></div>
+      <div class="stat"><span class="stat-n">13</span><span class="stat-l">women analysed</span></div>
+    </div>
+    <p class="info-body">Each stroke carries where both players stood, where the shuttle landed, and the shot type; the final stroke of every rally also records who won and how the point ended. I keep the analysis on the <strong>13 women's-singles players</strong>, about 22,500 strokes, where the data is rich enough to compare playstyles. One caveat travels with every number below: positions are in the broadcast's own camera coordinates, not meters, so distances are <span class="metric">relative</span>, useful for "twice as far," not for "three meters."</p>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section class="info info-alt" id="sMethod">
+  <div class="info-in">
+    <p class="info-kicker">The method</p>
+    <h2 class="info-h">Turn every shot into <span class="gold">one number.</span></h2>
+    <p class="info-body">The core measurement is <span class="metric">displacement</span>: the straight-line distance from where the receiving player was standing to where the shuttle actually landed. A big displacement means the shot dragged the opponent across the court; a small one means it landed right at them. It is the cleanest single proxy for the coaching idea of "making them run."</p>
+    <div class="method-steps">
+      <div class="mstep"><span class="mstep-n">01</span><p>Clean and merge all 58 matches into one stroke table, translate the shot labels, and compute displacement for every shot.</p></div>
+      <div class="mstep"><span class="mstep-n">02</span><p>Attach the rally's winner back onto every stroke, so each shot knows whether its hitter went on to win the point.</p></div>
+      <div class="mstep"><span class="mstep-n">03</span><p>Compare winners and losers three ways: by playstyle clusters, by pressure across the rally, and by the final shots.</p></div>
+    </div>
+    <p class="info-body">Everything here is <strong>descriptive</strong>: I compare averages and look for patterns, rather than fitting a predictive model or claiming a cause. Where a difference shows up, I weigh it against the ordinary shot-to-shot variation before calling it real. With that in hand, two hypotheses are worth testing.</p>
+    <p class="intro-cue">Two hypotheses. Let's test them.</p>
+  </div>
+</section>
 <div class="scr" id="secStyle">
   <div class="ch-pin">
-    <div class="act-tag">Hypothesis 1</div>
     <div class="ch-hdr"><h2>Maybe winning depends on <em>playstyle</em></h2><p>Attackers, controllers and defenders all play their own way, so maybe they win their own way too. I grouped the players by how they actually hit the shuttle.</p></div>
     <div class="ch-row">
       <div class="ch-main">
@@ -65,7 +94,6 @@
 <!-- ACT 2: PRESSURE (centerpiece) -->
 <div class="scr" id="secPressure">
   <div class="ch-pin">
-    <div class="act-tag">Hypothesis 2</div>
     <div class="ch-hdr"><h2>Maybe you win by <em>applying more pressure</em></h2><p>Move them more, wear them down, and eventually that pressure pays off. Here's how much each player moved their opponent across the rally, with winners and losers drawn separately.</p></div>
     <div class="ch-row">
       <div class="ch-main">
@@ -86,7 +114,6 @@
 <!-- ACT 2b: SETUP SHOT (does the winner build the kill at the end?) -->
 <div class="scr" id="secSetup">
   <div class="ch-pin">
-    <div class="act-tag">A closer look at the ending</div>
     <div class="ch-hdr"><h2>Maybe the kill gets built in the <em>last few shots</em></h2><p>The lines lean slightly toward the winner near the end. So does the winner engineer the opening in the closing exchanges? Here are the final six shots of the rally, for winners and losers.</p></div>
     <div class="ch-row">
       <div class="ch-main">
@@ -107,7 +134,6 @@
 <!-- ACT 3: THE ANSWER -->
 <div class="scr" id="secAnswer">
   <div class="ch-pin">
-    <div class="act-tag">What's actually happening</div>
     <div class="ch-hdr"><h2>So the rally comes down to <em>one shot</em></h2><p>The two players stay even, in pressure and in position, right up to the final exchange. So what actually settles it? Here's that last shot, grouped by how the point ended.</p></div>
     <div class="ch-row">
       <div class="ch-main">
